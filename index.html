@@ -2,23 +2,107 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=https://protocolfaro.github.io/faroprotocol/">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Faro Protocol · Satellite Economic Intelligence</title>
-<meta name="description" content="Satellite-based industrial audit reports using Sentinel-1 SAR and Sentinel-2 optical data. SHA-256 certified. Faro Protocol.">
-<link rel="canonical" href="https://protocolfaro.github.io/faroprotocol/">
+<meta name="description" content="Satellite-based industrial audit reports using Sentinel-1 SAR and Sentinel-2 optical data. SHA-256 certified.">
+<link rel="canonical" href="https://protocolfaro.github.io/">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:#06080b;color:#f2ede4;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}
-  .logo{font-family:Georgia,serif;font-size:32px;color:#c9a84c;letter-spacing:.18em;margin-bottom:12px;}
-  p{font-size:11px;color:#6b7280;letter-spacing:.1em;}
-  a{color:#c9a84c;text-decoration:none;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#06080b;--bg2:#0d1117;
+  --border:rgba(255,255,255,0.06);
+  --w:#f2ede4;--dim:#6b7280;
+  --gold:#c9a84c;--gl:#e2c97e;
+  --serif:'Cormorant Garamond',serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--w);font-family:var(--mono);-webkit-font-smoothing:antialiased;}
+
+/* HEADER */
+#hdr{
+  position:sticky;top:0;z-index:100;
+  height:48px;display:flex;align-items:center;gap:12px;padding:0 24px;
+  background:rgba(6,8,11,.97);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(8px);
+}
+.hdr-logo{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--gold);letter-spacing:.14em;}
+.hdr-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.hdr-tag{font-size:9px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;}
+
+/* HERO */
+.hero{
+  min-height:calc(100vh - 48px - 56px);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:80px 24px;
+  text-align:center;
+}
+
+.hero-eyebrow{
+  font-size:8px;letter-spacing:.28em;color:var(--gold);text-transform:uppercase;
+  margin-bottom:24px;
+}
+
+.hero-logo{
+  font-family:var(--serif);font-size:clamp(64px,12vw,120px);
+  font-weight:700;color:var(--w);letter-spacing:.14em;
+  line-height:1;margin-bottom:16px;
+}
+
+.hero-tagline{
+  font-family:var(--serif);font-size:clamp(16px,2.5vw,22px);font-weight:400;
+  color:rgba(242,237,228,.55);letter-spacing:.06em;
+  margin-bottom:56px;
+}
+
+.hero-cta{
+  display:inline-block;
+  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--bg);background:var(--gold);
+  padding:16px 40px;text-decoration:none;
+  border:1px solid var(--gold);
+  transition:background .2s,color .2s;
+}
+.hero-cta:hover{background:transparent;color:var(--gold);}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);
+  padding:16px 24px;text-align:center;
+}
+footer p{font-size:9px;color:var(--dim);letter-spacing:.1em;}
+footer a{color:var(--dim);text-decoration:none;transition:color .2s;}
+footer a:hover{color:var(--gold);}
+.footer-sep{margin:0 10px;opacity:.4;}
 </style>
 </head>
 <body>
-  <div>
-    <div class="logo">FARO</div>
-    <p>Redirecting to <a href="https://protocolfaro.github.io/faroprotocol/">Faro Protocol</a>…</p>
-  </div>
+
+<header id="hdr">
+  <span class="hdr-logo">FARO</span>
+  <div class="hdr-sep"></div>
+  <span class="hdr-tag">Terminal de Auditoría Satelital</span>
+</header>
+
+<main class="hero">
+  <div class="hero-eyebrow">Sentinel-1 SAR · Sentinel-2 · SHA-256</div>
+  <div class="hero-logo">FARO</div>
+  <div class="hero-tagline">Terminal de Auditoría Satelital</div>
+  <a class="hero-cta" href="/faroprotocol/faro-demo.html">ABRIR TERMINAL →</a>
+</main>
+
+<footer>
+  <p>
+    © 2026 Faro Protocol
+    <span class="footer-sep">·</span>
+    <a href="/faroprotocol/terms.html">Terms of Service</a>
+    <span class="footer-sep">·</span>
+    <a href="/faroprotocol/privacy.html">Privacy Policy</a>
+    <span class="footer-sep">·</span>
+    <a href="/faroprotocol/refunds.html">Refund Policy</a>
+  </p>
+</footer>
+
 </body>
 </html>
