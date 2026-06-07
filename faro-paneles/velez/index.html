@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Faro Protocol · Vélez · Panel 3D</title>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+/* ── Design system Vélez ──────────────────────────────────────────────────── */
+:root {
+  --bg:    #0d1117;
+  --bg2:   #161b22;
+  --bg3:   #1c2330;
+  --gold:  #c9a84c;
+  --goldd: rgba(201,168,76,.15);
+  --whi:   #e8e6e0;
+  --wdim:  #8b8680;
+  --red:   #e05252;
+  --redd:  rgba(224,82,82,.15);
+  --yel:   #e0b84c;
+  --yeld:  rgba(224,184,76,.15);
+  --grn:   #4cad72;
+  --grnd:  rgba(76,173,114,.15);
+  --blu:   #64b5f6;
+  --border:rgba(255,255,255,.07);
+  --r:     10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--whi);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+#header{
+  height:54px;
+  background:var(--bg2);
+  border-bottom:1px solid rgba(201,168,76,.25);
+  display:flex;align-items:center;
+  padding:0 16px;gap:12px;
+  flex-shrink:0;z-index:100;
+}
+.hdr-logo-row{display:flex;align-items:center;gap:8px}
+.hdr-dot{width:7px;height:7px;background:var(--gold);border-radius:50%}
+.hdr-brand{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--gold);text-transform:uppercase}
+.hdr-sep{color:rgba(201,168,76,.3);font-size:14px;margin:0 2px}
+.hdr-venue{font-size:12px;font-weight:600;color:var(--whi)}
+.hdr-spacer{flex:1}
+
+/* ── Vista toggle ─────────────────────────────────────────────────────────── */
+#view-toggle{
+  display:flex;align-items:center;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:3px;gap:2px;
+}
+.vt-btn{
+  padding:5px 14px;
+  border-radius:16px;border:none;
+  font-size:11px;font-weight:600;letter-spacing:.04em;
+  cursor:pointer;transition:all .2s;
+  background:transparent;color:var(--wdim);
+}
+.vt-btn.active{background:var(--gold);color:#0d1117}
+
+/* ── Map area ─────────────────────────────────────────────────────────────── */
+#map-wrap{flex:1;position:relative;overflow:hidden}
+#map{width:100%;height:100%;transition:filter .3s}
+#map.switching{filter:brightness(.7)}
+
+/* ── Side panel ───────────────────────────────────────────────────────────── */
+#sidepanel{
+  position:absolute;top:12px;right:12px;
+  width:252px;
+  background:rgba(22,27,34,.97);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  backdrop-filter:blur(14px);
+  z-index:10;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  max-height:calc(100dvh - 78px);
+}
+.sp-head{
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:10px;font-weight:700;letter-spacing:.1em;
+  color:var(--gold);text-transform:uppercase;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.sp-head .live-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--grn);
+  box-shadow:0 0 5px var(--grn);animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Scrollable body */
+.sp-body{overflow-y:auto;flex:1}
+.sp-body::-webkit-scrollbar{width:3px}
+.sp-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── Layer rows ───────────────────────────────────────────────────────────── */
+.layer-row{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 14px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+}
+.layer-row:hover{background:rgba(255,255,255,.03)}
+.l-swatch{width:26px;height:14px;border-radius:3px;flex-shrink:0}
+.l-ndvi{background:linear-gradient(90deg,#a50026,#f46d43,#fee08b,#66bd63,#006837)}
+.l-sar{background:linear-gradient(90deg,#1a1a2e,#888aaa)}
+.l-alerts{background:radial-gradient(circle at 40%,#e05252,#600)}
+.l-name{font-size:12px;flex:1;line-height:1.3}
+.l-sub{font-size:9px;color:var(--wdim);margin-top:1px}
+.tog{
+  width:32px;height:17px;border-radius:9px;
+  background:var(--gold);border:none;cursor:pointer;
+  position:relative;flex-shrink:0;transition:background .2s;
+}
+.tog.off{background:rgba(255,255,255,.12)}
+.tog::after{
+  content:'';position:absolute;
+  top:2px;left:2px;width:13px;height:13px;
+  border-radius:50%;background:#fff;transition:transform .2s;
+}
+.tog.on::after{transform:translateX(15px)}
+
+/* ── Slider temporal ──────────────────────────────────────────────────────── */
+.slider-section{padding:11px 14px;border-bottom:1px solid var(--border)}
+.sl-hdr{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:9px;color:var(--wdim);text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:8px;
+}
+.sl-hdr strong{color:var(--gold);font-size:11px}
+input[type=range]{
+  width:100%;-webkit-appearance:none;appearance:none;
+  height:3px;background:rgba(255,255,255,.12);border-radius:2px;
+  outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:var(--gold);cursor:pointer;
+}
+.sl-date{
+  text-align:center;font-size:11px;color:var(--whi);
+  margin-top:7px;min-height:16px;
+}
+
+/* ── Stats grid ───────────────────────────────────────────────────────────── */
+.stats-section{padding:10px 14px;border-bottom:1px solid var(--border)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat-card{background:var(--bg3);border-radius:6px;padding:8px 10px}
+.sc-label{font-size:9px;color:var(--wdim);text-transform:uppercase;letter-spacing:.06em}
+.sc-val{font-size:18px;font-weight:700;color:var(--gold);margin-top:2px;line-height:1}
+.sc-val.ndvi-good{color:var(--grn)}
+.sc-val.ndvi-warn{color:var(--yel)}
+.sc-val.ndvi-bad {color:var(--red)}
+.sc-unit{font-size:9px;color:var(--wdim);margin-top:1px}
+
+/* ── Alerts list ──────────────────────────────────────────────────────────── */
+.alerts-section{padding:8px 14px}
+.alert-item{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:6px 0;border-bottom:1px solid var(--border);
+  font-size:11px;cursor:pointer;
+}
+.alert-item:hover{opacity:.8}
+.alert-item:last-child{border-bottom:none}
+.adot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.adot.rojo   {background:var(--red)}
+.adot.amarillo{background:var(--yel)}
+.adot.verde  {background:var(--grn)}
+.adot.none   {background:var(--wdim)}
+.atext{flex:1;color:var(--wdim);line-height:1.4}
+.adaté{font-size:9px;color:var(--wdim);flex-shrink:0;margin-top:3px}
+
+/* ── Popup ────────────────────────────────────────────────────────────────── */
+#map-popup{
+  position:absolute;bottom:16px;left:12px;
+  width:calc(100% - 280px);max-width:300px;
+  background:rgba(22,27,34,.98);
+  border:1px solid rgba(201,168,76,.4);
+  border-radius:var(--r);padding:14px;
+  z-index:20;display:none;
+  backdrop-filter:blur(10px);
+}
+#map-popup.show{display:block}
+.pp-close{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--wdim);font-size:17px;cursor:pointer;line-height:1}
+#pp-title{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px}
+.pp-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.pp-row:last-of-type{border:none}
+.pp-key{color:var(--wdim)}
+.pp-val{font-weight:600}
+.pp-rec{margin-top:9px;padding:8px 10px;background:var(--bg3);border-radius:6px;font-size:10px;color:var(--whi);line-height:1.55}
+.pp-source{font-size:9px;color:var(--wdim);margin-top:7px;text-align:right;opacity:.6}
+
+/* ── Loading overlay ──────────────────────────────────────────────────────── */
+#tile-loading{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  background:rgba(22,27,34,.9);border:1px solid var(--border);
+  border-radius:20px;padding:5px 14px;
+  font-size:11px;color:var(--wdim);
+  z-index:15;display:none;
+  backdrop-filter:blur(8px);
+}
+#tile-loading.show{display:flex;align-items:center;gap:7px}
+.mini-spin{width:10px;height:10px;border:1.5px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+@media(max-width:580px){
+  #sidepanel{
+    width:calc(100% - 16px);right:8px;top:auto;
+    bottom:8px;max-height:48vh;
+  }
+  #map-popup{
+    width:calc(100% - 16px);max-width:none;
+    left:8px;bottom:auto;top:62px;
+  }
+  .hdr-venue{display:none}
+  .hdr-sep{display:none}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<div id="header">
+  <div class="hdr-logo-row">
+    <div class="hdr-dot"></div>
+    <span class="hdr-brand">Faro Protocol</span>
+    <span class="hdr-sep">·</span>
+    <span class="hdr-venue">Vélez Sársfield</span>
+  </div>
+
+  <div class="hdr-spacer"></div>
+
+  <!-- Vista 2D / Vista 3D toggle -->
+  <div id="view-toggle" role="group" aria-label="Modo de vista">
+    <button class="vt-btn active" id="btn-2d" onclick="setView('2d')">Vista 2D</button>
+    <button class="vt-btn"        id="btn-3d" onclick="setView('3d')">Vista 3D</button>
+  </div>
+</div>
+
+<!-- ── Mapa ────────────────────────────────────────────────────────────────── -->
+<div id="map-wrap">
+  <div id="map"></div>
+
+  <!-- Indicador de carga de tiles -->
+  <div id="tile-loading"><div class="mini-spin"></div>Cargando datos satelitales…</div>
+
+  <!-- Panel lateral -->
+  <div id="sidepanel">
+    <div class="sp-head">
+      <span>Capas · Monitoreo</span>
+      <span class="live-dot" title="Datos en tiempo real"></span>
+    </div>
+
+    <div class="sp-body">
+
+      <!-- Capas toggle -->
+      <div class="layer-row" onclick="toggleLayer('ndvi')">
+        <div class="l-swatch l-ndvi"></div>
+        <div style="flex:1">
+          <div class="l-name">NDVI Sentinel-2</div>
+          <div class="l-sub">Vegetación · RdYlGn · Element84</div>
+        </div>
+        <button class="tog on" id="tog-ndvi" aria-label="Toggle NDVI"></button>
+      </div>
+
+      <div class="layer-row" onclick="toggleLayer('sar')">
+        <div class="l-swatch l-sar"></div>
+        <div style="flex:1">
+          <div class="l-name">SAR Backscatter VV</div>
+          <div class="l-sub">OPERA RTC-S1 · NASA · 40%</div>
+        </div>
+        <button class="tog on" id="tog-sar" aria-label="Toggle SAR"></button>
+      </div>
+
+      <div class="layer-row" onclick="toggleLayer('alerts')">
+        <div class="l-swatch l-alerts"></div>
+        <div style="flex:1">
+          <div class="l-name">Alertas Paperclip</div>
+          <div class="l-sub">Supabase · tiempo real</div>
+        </div>
+        <button class="tog on" id="tog-alerts" aria-label="Toggle Alertas"></button>
+      </div>
+
+      <!-- Slider temporal -->
+      <div class="slider-section">
+        <div class="sl-hdr">
+          <span>Serie temporal</span>
+          <strong id="obs-count">— obs.</strong>
+        </div>
+        <input type="range" id="obs-slider" min="0" max="0" value="0" disabled>
+        <div class="sl-date" id="obs-date">Cargando observaciones…</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="sc-label">NDVI</div>
+            <div class="sc-val" id="stat-ndvi">—</div>
+            <div class="sc-unit">vegetación</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Nubosidad</div>
+            <div class="sc-val" id="stat-nub">—</div>
+            <div class="sc-unit">cobertura %</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Fuente</div>
+            <div class="sc-val" style="font-size:11px;margin-top:4px" id="stat-fuente">—</div>
+            <div class="sc-unit">plataforma</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">SAR dB</div>
+            <div class="sc-val" id="stat-sar">—</div>
+            <div class="sc-unit">backscatter VV</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertas Paperclip -->
+      <div class="sp-head" style="border-top:1px solid var(--border)">
+        <span>Alertas Paperclip</span>
+      </div>
+      <div class="alerts-section" id="alerts-list">
+        <div class="alert-item">
+          <div class="adot none"></div>
+          <div class="atext">Cargando alertas…</div>
+        </div>
+      </div>
+
+    </div><!-- /sp-body -->
+  </div><!-- /sidepanel -->
+
+  <!-- Popup click en mapa -->
+  <div id="map-popup">
+    <button class="pp-close" onclick="closePopup()">×</button>
+    <div id="pp-title">—</div>
+    <div id="pp-rows"></div>
+    <div class="pp-rec" id="pp-rec" style="display:none"></div>
+    <div class="pp-source" id="pp-source"></div>
+  </div>
+
+</div><!-- /map-wrap -->
+
+<script>
+'use strict';
+
+/* ── Configuración ──────────────────────────────────────────────────────────
+   SUPABASE_KEY: reemplazar con la anon key real del proyecto
+   (Panel > Project Settings > API > anon public)
+   ──────────────────────────────────────────────────────────────────────────── */
+const CFG = {
+  BACKEND:      'https://faroprotocol-production-45fd.up.railway.app',
+  SUPABASE_URL: 'https://xljxpzudgwhbzcnrvylo.supabase.co',
+  SUPABASE_KEY: '__SUPABASE_ANON_KEY__',   // ← reemplazar con la anon key real
+  VENUE_ID:     'amalfitani',
+  CENTER:       [-58.5288, -34.6369],      // Estadio Amalfitani · Vélez
+  ZOOM_2D:      15.4,
+  ZOOM_3D:      15.2,
+};
+
+/* ── Estado ─────────────────────────────────────────────────────────────────*/
+let viewMode     = '2d';
+let timeseries   = [];          // rows de field_timeseries
+let currentIdx   = 0;
+let mapReady     = false;
+const layerState = { ndvi: true, sar: true, alerts: true };
+
+/* ── Supabase REST helper ───────────────────────────────────────────────────*/
+async function sbFetch(path) {
+  const url = `${CFG.SUPABASE_URL}/rest/v1/${path}`;
+  const res = await fetch(url, {
+    headers: {
+      'apikey':        CFG.SUPABASE_KEY,
+      'Authorization': `Bearer ${CFG.SUPABASE_KEY}`,
+      'Accept':        'application/json',
+    },
+  });
+  if (!res.ok) throw new Error(`Supabase ${res.status}: ${res.url}`);
+  return res.json();
+}
+
+/* ── MapLibre ───────────────────────────────────────────────────────────────*/
+const map = new maplibregl.Map({
+  container: 'map',
+  style: {
+    version: 8,
+    glyphs:  'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources: {
+      osm: {
+        type:        'raster',
+        tiles:       ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize:    256,
+        attribution: '© OpenStreetMap',
+        maxzoom:     19,
+      },
+    },
+    layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+  },
+  center:  CFG.CENTER,
+  zoom:    CFG.ZOOM_2D,
+  pitch:   0,
+  bearing: 0,
+});
+
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+
+/* ── on('load') — agregar todas las capas ───────────────────────────────────*/
+map.on('load', () => {
+  mapReady = true;
+
+  // ── NDVI tiles ────────────────────────────────────────────────────────────
+  map.addSource('ndvi-src', {
+    type:        'raster',
+    tiles:       [`${CFG.BACKEND}/tiles/ndvi/{z}/{x}/{y}?venue=velez`],
+    tileSize:    256,
+    attribution: 'Faro · Sentinel-2 L2A · Element84',
+  });
+  map.addLayer({
+    id: 'ndvi-layer', type: 'raster', source: 'ndvi-src',
+    paint: { 'raster-opacity': 0.82 },
+  });
+
+  // ── SAR tiles ─────────────────────────────────────────────────────────────
+  map.addSource('sar-src', {
+    type:        'raster',
+    tiles:       [`${CFG.BACKEND}/tiles/sar/{z}/{x}/{y}?venue=velez&opacity=102`],
+    tileSize:    256,
+    attribution: 'Faro · OPERA RTC-S1 · NASA',
+  });
+  map.addLayer({
+    id: 'sar-layer', type: 'raster', source: 'sar-src',
+    paint: { 'raster-opacity': 0.40 },
+  });
+
+  // ── Alertas GeoJSON ───────────────────────────────────────────────────────
+  map.addSource('alerts-src', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  });
+  map.addLayer({
+    id: 'alerts-circles', type: 'circle', source: 'alerts-src',
+    paint: {
+      'circle-radius':        8,
+      'circle-color':         ['case',
+        ['==', ['get', 'nivel'], 'rojo'],     '#e05252',
+        ['==', ['get', 'nivel'], 'amarillo'], '#e0b84c',
+        '#4cad72',
+      ],
+      'circle-stroke-width':  2,
+      'circle-stroke-color':  'rgba(255,255,255,.35)',
+      'circle-opacity':       0.95,
+    },
+  });
+  map.addLayer({
+    id: 'alerts-labels', type: 'symbol', source: 'alerts-src',
+    layout: {
+      'text-field':  ['slice', ['get', 'nivel'], 0, 1],
+      'text-size':   9,
+      'text-offset': [0, 0],
+    },
+    paint: { 'text-color': '#fff' },
+  });
+
+  // ── Click en alertas → popup ──────────────────────────────────────────────
+  map.on('click', 'alerts-circles', e => {
+    const p = e.features[0].properties;
+    showPopup(`Alerta · ${p.nivel || '?'}`, {
+      'Nivel':         p.nivel || '—',
+      'Motivo':        p.motivo || '—',
+      'Confianza':     p.confianza != null ? `${(+p.confianza * 100).toFixed(0)}%` : '—',
+      'Fecha':         (p.created_at || '').slice(0, 10),
+    }, p.recomendacion || '', 'Paperclip · Supabase tiempo real');
+  });
+
+  // ── Click en mapa → /velez/cancha-info (con fallback Supabase) ────────────
+  map.on('click', e => {
+    if (map.queryRenderedFeatures(e.point, { layers: ['alerts-circles'] }).length) return;
+    fetchCanchaInfo(e.lngLat.lat, e.lngLat.lng);
+  });
+
+  map.on('mouseenter', 'alerts-circles', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+  map.on('mouseleave', 'alerts-circles', () => {
+    map.getCanvas().style.cursor = '';
+  });
+
+  // ── Tile loading indicator ────────────────────────────────────────────────
+  map.on('dataloading', e => {
+    if (e.dataType === 'source') showLoading(true);
+  });
+  map.on('idle', () => showLoading(false));
+
+  // ── Init data loads ───────────────────────────────────────────────────────
+  loadTimeseries();
+  loadAlerts();
+});
+
+/* ── Indicador de carga de tiles ────────────────────────────────────────────*/
+function showLoading(show) {
+  document.getElementById('tile-loading').classList.toggle('show', show);
+}
+
+/* ── Timeseries — field_timeseries desde Supabase ───────────────────────────*/
+async function loadTimeseries() {
+  try {
+    const rows = await sbFetch(
+      `field_timeseries?venue_id=eq.${CFG.VENUE_ID}&order=fecha.asc&limit=500`
+    );
+    if (!Array.isArray(rows) || rows.length === 0) {
+      useFallbackTimeseries();
+      return;
+    }
+    timeseries = rows;
+    initSlider();
+  } catch (err) {
+    console.warn('field_timeseries:', err.message);
+    useFallbackTimeseries();
+  }
+}
+
+function useFallbackTimeseries() {
+  // Serie sintética si Supabase no responde
+  const base = new Date('2020-01-08');
+  timeseries = Array.from({ length: 76 }, (_, i) => {
+    const d = new Date(base);
+    d.setDate(d.getDate() + i * 25);
+    const t = i / 75;
+    return {
+      fecha:     d.toISOString().slice(0, 10),
+      ndvi:      +(0.45 + 0.25 * Math.sin(t * Math.PI * 3 + 1) + (Math.random()-.5)*.05).toFixed(3),
+      nubosidad: +(Math.random() * 25).toFixed(1),
+      fuente:    'fallback',
+    };
+  });
+  initSlider();
+}
+
+function initSlider() {
+  const slider = document.getElementById('obs-slider');
+  slider.max   = String(timeseries.length - 1);
+  slider.value = String(timeseries.length - 1);
+  slider.disabled = false;
+  document.getElementById('obs-count').textContent = `${timeseries.length} obs.`;
+  currentIdx = timeseries.length - 1;
+  updateFromObs(currentIdx);
+
+  slider.addEventListener('input', () => {
+    currentIdx = +slider.value;
+    updateFromObs(currentIdx);
+  });
+}
+
+function updateFromObs(idx) {
+  const obs = timeseries[idx];
+  if (!obs) return;
+
+  document.getElementById('obs-date').textContent    = obs.fecha;
+  document.getElementById('stat-ndvi').textContent   = obs.ndvi != null ? (+obs.ndvi).toFixed(3) : '—';
+  document.getElementById('stat-nub').textContent    = obs.nubosidad != null ? `${(+obs.nubosidad).toFixed(0)}%` : '—';
+  document.getElementById('stat-fuente').textContent = obs.fuente || 'S2';
+  document.getElementById('stat-sar').textContent    = '—';   // SAR live desde tiles
+
+  // Color semafórico NDVI
+  const ndviEl = document.getElementById('stat-ndvi');
+  const n = +(obs.ndvi);
+  ndviEl.className = 'sc-val ' + (n >= 0.55 ? 'ndvi-good' : n >= 0.35 ? 'ndvi-warn' : 'ndvi-bad');
+
+  // Refrescar NDVI tile con la fecha de la observación
+  refreshNDVITile(obs.fecha);
+}
+
+function refreshNDVITile(fecha) {
+  if (!mapReady || !map.getSource('ndvi-src')) return;
+  const url = `${CFG.BACKEND}/tiles/ndvi/{z}/{x}/{y}?venue=velez&_date=${fecha}`;
+  map.getSource('ndvi-src').setTiles([url]);
+}
+
+/* ── Alertas Paperclip desde Supabase ───────────────────────────────────────*/
+async function loadAlerts() {
+  try {
+    const rows = await sbFetch(
+      `paperclip_decisions?venue_id=eq.${CFG.VENUE_ID}&order=created_at.desc&limit=10`
+    );
+    renderAlerts(Array.isArray(rows) ? rows : []);
+  } catch (err) {
+    console.warn('paperclip_decisions:', err.message);
+    renderAlerts([]);
+  }
+}
+
+function renderAlerts(rows) {
+  const el = document.getElementById('alerts-list');
+  el.innerHTML = '';
+
+  if (rows.length === 0) {
+    el.innerHTML = '<div class="alert-item"><div class="adot verde"></div><div class="atext">Sin alertas activas</div></div>';
+    return;
+  }
+
+  const features = [];
+  rows.forEach(r => {
+    // Lista
+    const div = document.createElement('div');
+    div.className = 'alert-item';
+    div.innerHTML = `
+      <div class="adot ${r.nivel || 'none'}"></div>
+      <div style="flex:1">
+        <div class="atext">${r.motivo || r.venue_id || '—'}</div>
+      </div>
+      <div class="adaté">${(r.created_at || '').slice(0,10)}</div>`;
+    div.onclick = () => showPopup(
+      `Alerta · ${r.nivel || '?'}`,
+      {
+        'Nivel':     r.nivel || '—',
+        'Motivo':    r.motivo || '—',
+        'Confianza': r.confianza != null ? `${(+r.confianza*100).toFixed(0)}%` : '—',
+        'Fecha':     (r.created_at || '').slice(0,10),
+      },
+      r.recomendacion || '',
+      'Paperclip · Supabase',
+    );
+    el.appendChild(div);
+
+    // GeoJSON marker (usamos coordenadas del venue como punto central si no hay lat/lon)
+    const lon = r.lon ?? (CFG.CENTER[0] + (Math.random()-.5)*.002);
+    const lat = r.lat ?? (CFG.CENTER[1] + (Math.random()-.5)*.001);
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [lon, lat] },
+      properties: { ...r },
+    });
+  });
+
+  if (mapReady && map.getSource('alerts-src')) {
+    map.getSource('alerts-src').setData({ type: 'FeatureCollection', features });
+  }
+}
+
+/* ── Click en mapa → /velez/cancha-info (fallback Supabase) ─────────────────*/
+async function fetchCanchaInfo(lat, lng) {
+  const coord = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  showPopup(coord, {}, 'Consultando…', '');
+
+  try {
+    // Intentar endpoint backend
+    const res = await fetch(
+      `${CFG.BACKEND}/velez/cancha-info?lat=${lat}&lng=${lng}`,
+      { signal: AbortSignal.timeout(6000) }
+    );
+    if (res.ok) {
+      const d = await res.json();
+      showPopup(d.cancha || coord, {
+        'NDVI':    d.ndvi  != null ? (+d.ndvi).toFixed(4)  : '—',
+        'BSI':     d.bsi   != null ? (+d.bsi).toFixed(4)   : '—',
+        'NDWI':    d.ndwi  != null ? (+d.ndwi).toFixed(4)  : '—',
+        'SAR dB':  d.sar_db != null ? `${(+d.sar_db).toFixed(1)} dB` : '—',
+        'Fuente':  d.fuente || 'Supabase',
+      }, d.recomendacion || '', d.fuente || 'Backend');
+      return;
+    }
+  } catch (_) {
+    // fallback — usar última observación de timeseries
+  }
+
+  // Fallback: datos de la observación seleccionada actualmente
+  const obs = timeseries[currentIdx];
+  if (obs) {
+    showPopup(coord, {
+      'NDVI':   obs.ndvi  != null ? (+obs.ndvi).toFixed(4) : '—',
+      'Nubos.': obs.nubosidad != null ? `${(+obs.nubosidad).toFixed(0)}%` : '—',
+      'Fecha':  obs.fecha,
+      'Fuente': obs.fuente || 'S2',
+    }, getNDVIRec(obs.ndvi), `Serie temporal · ${obs.fecha}`);
+  } else {
+    showPopup(coord, { 'Coordenada': coord }, '', '');
+  }
+}
+
+function getNDVIRec(ndvi) {
+  const n = +(ndvi);
+  if (n >= 0.65) return 'Vegetación densa y saludable.';
+  if (n >= 0.45) return 'Cobertura moderada. Monitoreo preventivo.';
+  if (n >= 0.25) return 'Estrés vegetal detectado. Revisar riego.';
+  return 'Cobertura muy baja. Intervención urgente.';
+}
+
+/* ── Popup ───────────────────────────────────────────────────────────────────*/
+function showPopup(title, rows, rec, source) {
+  document.getElementById('pp-title').textContent = title;
+
+  const rowsEl = document.getElementById('pp-rows');
+  rowsEl.innerHTML = '';
+  for (const [k, v] of Object.entries(rows)) {
+    if (!v && v !== 0) continue;
+    rowsEl.innerHTML += `
+      <div class="pp-row">
+        <span class="pp-key">${k}</span>
+        <span class="pp-val">${v}</span>
+      </div>`;
+  }
+
+  const recEl = document.getElementById('pp-rec');
+  if (rec) { recEl.textContent = rec; recEl.style.display = 'block'; }
+  else      { recEl.style.display = 'none'; }
+
+  document.getElementById('pp-source').textContent = source || '';
+  document.getElementById('map-popup').classList.add('show');
+}
+
+function closePopup() {
+  document.getElementById('map-popup').classList.remove('show');
+}
+
+/* ── Toggle capas ────────────────────────────────────────────────────────────*/
+function toggleLayer(id) {
+  layerState[id] = !layerState[id];
+  const btn = document.getElementById(`tog-${id}`);
+  if (btn) btn.classList.toggle('on', layerState[id]);
+
+  if (!mapReady) return;
+  const vis = layerState[id] ? 'visible' : 'none';
+  const layerMap = {
+    ndvi:   'ndvi-layer',
+    sar:    'sar-layer',
+    alerts: 'alerts-circles',
+  };
+  const extraMap = { alerts: 'alerts-labels' };
+
+  if (map.getLayer(layerMap[id])) map.setLayoutProperty(layerMap[id], 'visibility', vis);
+  if (extraMap[id] && map.getLayer(extraMap[id])) map.setLayoutProperty(extraMap[id], 'visibility', vis);
+}
+
+/* ── Vista 2D / Vista 3D ─────────────────────────────────────────────────────*/
+function setView(mode) {
+  if (mode === viewMode) return;
+  viewMode = mode;
+
+  document.getElementById('btn-2d').classList.toggle('active', mode === '2d');
+  document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
+  document.getElementById('map').classList.add('switching');
+
+  setTimeout(() => {
+    document.getElementById('map').classList.remove('switching');
+  }, 300);
+
+  if (mode === '3d') {
+    map.easeTo({
+      pitch:    55,
+      bearing:  -20,
+      zoom:     CFG.ZOOM_3D,
+      duration: 700,
+      easing:   t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t,
+    });
+    // En 3D: todas las capas visibles, SAR más prominente
+    if (mapReady && map.getLayer('sar-layer')) {
+      map.setPaintProperty('sar-layer', 'raster-opacity', 0.50);
+      map.setPaintProperty('ndvi-layer', 'raster-opacity', 0.75);
+    }
+  } else {
+    map.easeTo({
+      pitch:    0,
+      bearing:  0,
+      zoom:     CFG.ZOOM_2D,
+      duration: 600,
+    });
+    // En 2D: opacidades estándar
+    if (mapReady && map.getLayer('sar-layer')) {
+      map.setPaintProperty('sar-layer', 'raster-opacity', 0.40);
+      map.setPaintProperty('ndvi-layer', 'raster-opacity', 0.82);
+    }
+  }
+}
+</script>
+</body>
+</html>

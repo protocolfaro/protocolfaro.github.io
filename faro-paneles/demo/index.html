@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Demo · Faro Protocol · Monitoreo Satelital</title>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+  :root{--gold:#c9a84c;--gold-dim:#8a6f2e;--bg:#0a0a0a;--panel:rgba(15,15,15,.97);--border:#2a2a2a;--text:#e8e8e8;--muted:#777;--red:#e05050;--green:#4caf7d;--r:8px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* Hero topbar */
+  #topbar{height:56px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;z-index:10}
+  .tb-logo{font-size:14px;font-weight:800;letter-spacing:.12em;color:var(--gold);text-transform:uppercase}
+  .tb-tag{font-size:11px;color:var(--muted);padding:3px 8px;border:1px solid var(--border);border-radius:4px}
+  .tb-spacer{flex:1}
+  .tb-btn{font-size:11px;padding:6px 14px;border-radius:6px;border:1px solid var(--gold);color:var(--gold);background:transparent;cursor:pointer;text-decoration:none;transition:all .2s}
+  .tb-btn:hover{background:var(--gold);color:#000}
+
+  /* Map */
+  #map-wrap{flex:1;position:relative;overflow:hidden}
+  #map{width:100%;height:100%}
+
+  /* Venue cards overlay */
+  #venue-cards{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:8px;z-index:5;max-width:240px}
+  .venue-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:border-color .2s}
+  .venue-card:hover,.venue-card.active{border-color:var(--gold)}
+  .vc-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+  .vc-sub{font-size:10px;color:var(--muted);margin-bottom:8px}
+  .vc-chips{display:flex;gap:4px;flex-wrap:wrap}
+  .chip{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:600;letter-spacing:.03em}
+  .chip-ndvi{background:rgba(76,175,75,.2);color:#4caf7d}
+  .chip-sar{background:rgba(88,88,200,.2);color:#aab}
+  .chip-sar-alert{background:rgba(224,80,80,.2);color:var(--red)}
+  .vc-cert{display:inline-block;margin-top:8px;font-size:10px;color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold-dim)}
+
+  /* Stats bar bottom */
+  #stats-bar{position:absolute;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--border);padding:10px 16px;z-index:5;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+  .sb-item{display:flex;flex-direction:column;align-items:center;gap:1px}
+  .sb-val{font-size:16px;font-weight:700;color:var(--gold)}
+  .sb-key{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+  /* Layer toggles top-right */
+  #layer-panel{position:absolute;top:12px;right:12px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;z-index:5;min-width:160px}
+  .lp-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+  .lp-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px;cursor:pointer}
+  .lp-row:last-child{margin-bottom:0}
+  .lp-swatch{width:20px;height:10px;border-radius:2px}
+  .sw-ndvi{background:linear-gradient(90deg,#a50026,#f46d43,#fee08b,#66bd63,#006837)}
+  .sw-sar{background:linear-gradient(90deg,#222,#888)}
+  .toggle{width:30px;height:16px;border-radius:8px;background:var(--gold);border:none;position:relative;cursor:pointer;margin-left:auto;flex-shrink:0}
+  .toggle.off{background:var(--border)}
+  .toggle::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
+  .toggle.on::after{transform:translateX(14px)}
+
+  /* Popup */
+  #popup{display:none;position:absolute;bottom:80px;left:12px;max-width:280px;background:var(--panel);border:1px solid var(--gold-dim);border-radius:var(--r);padding:14px;z-index:6;backdrop-filter:blur(8px)}
+  #popup.show{display:block}
+  .pp-close{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer}
+  #popup h4{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+  .pp-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+  .pp-row:last-of-type{border:none}
+  .pp-key{color:var(--muted)}
+  .pp-val{font-weight:600}
+  .pp-link{display:block;margin-top:10px;text-align:center;font-size:11px;color:var(--gold);text-decoration:none;padding:7px;border:1px solid var(--gold-dim);border-radius:6px}
+  .pp-link:hover{background:var(--gold);color:#000}
+
+  @media(max-width:600px){
+    #venue-cards{max-width:none;left:8px;right:8px;top:8px;flex-direction:row;overflow-x:auto;flex-wrap:nowrap}
+    .venue-card{min-width:200px;flex-shrink:0}
+    #layer-panel{display:none}
+    #popup{left:8px;right:8px;max-width:none;bottom:100px}
+  }
+</style>
+</head>
+
+<body>
+
+<div id="topbar">
+  <span class="tb-logo">Faro Protocol</span>
+  <span class="tb-tag">Demo pública</span>
+  <span class="tb-spacer"></span>
+  <a href="https://protocolfaro.github.io/faroprotocol/" class="tb-btn">Ver plataforma</a>
+</div>
+
+<div id="map-wrap">
+  <div id="map"></div>
+
+  <!-- Venue cards -->
+  <div id="venue-cards">
+
+    <div class="venue-card active" id="card-amalfitani" onclick="flyToVenue('amalfitani')">
+      <div class="vc-title">Estadio Amalfitani</div>
+      <div class="vc-sub">Buenos Aires · post Airbag SAR</div>
+      <div class="vc-chips">
+        <span class="chip chip-sar-alert">SAR compactación</span>
+        <span class="chip chip-ndvi">NDVI +0.52</span>
+      </div>
+      <a class="vc-cert" href="#" onclick="showCert('amalfitani'); return false;">Ver certificado →</a>
+    </div>
+
+    <div class="venue-card" id="card-balcarce" onclick="flyToVenue('balcarce')">
+      <div class="vc-title">Campo Balcarce</div>
+      <div class="vc-sub">Buenos Aires · NDVI trigo</div>
+      <div class="vc-chips">
+        <span class="chip chip-ndvi">NDVI 0.71</span>
+        <span class="chip chip-sar">SAR activo</span>
+      </div>
+    </div>
+
+    <div class="venue-card" id="card-anelo" onclick="flyToVenue('anelo')">
+      <div class="vc-title">Añelo · Vaca Muerta</div>
+      <div class="vc-sub">Neuquén · SAR deformación</div>
+      <div class="vc-chips">
+        <span class="chip chip-sar-alert">SAR subsidencia</span>
+        <span class="chip chip-sar">InSAR</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Layer toggles -->
+  <div id="layer-panel">
+    <div class="lp-title">Capas activas</div>
+    <div class="lp-row" onclick="toggleL('ndvi')">
+      <div class="lp-swatch sw-ndvi"></div>
+      <span>NDVI Sentinel-2</span>
+      <button class="toggle on" id="t-ndvi"></button>
+    </div>
+    <div class="lp-row" onclick="toggleL('sar')">
+      <div class="lp-swatch sw-sar"></div>
+      <span>SAR Backscatter</span>
+      <button class="toggle on" id="t-sar"></button>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div id="stats-bar">
+    <div class="sb-item"><div class="sb-val" id="sb-venue">Amalfitani</div><div class="sb-key">Venue activo</div></div>
+    <div class="sb-item"><div class="sb-val" id="sb-ndvi">0.52</div><div class="sb-key">NDVI</div></div>
+    <div class="sb-item"><div class="sb-val" id="sb-sar">−11.3 dB</div><div class="sb-key">SAR VV</div></div>
+    <div class="sb-item"><div class="sb-val" id="sb-delta">−1.8 dB</div><div class="sb-key">Δ SAR post-show</div></div>
+    <div class="sb-item" style="margin-left:auto"><div class="sb-val" style="font-size:12px;color:var(--muted)">Sentinel-2 + OPERA RTC-S1 · Faro Protocol 2026</div></div>
+  </div>
+
+  <!-- Popup -->
+  <div id="popup">
+    <button class="pp-close" onclick="closePopup()">×</button>
+    <h4 id="pp-title">—</h4>
+    <div id="pp-rows"></div>
+    <a class="pp-link" id="pp-cert-link" href="#" style="display:none">Ver certificado →</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── Config ─────────────────────────────────────────────────────────────────────
+const BACKEND = window.FARO_BACKEND || 'https://faroprotocol-production.up.railway.app';
+
+// Venues
+const VENUES = {
+  amalfitani: {
+    name:    'Estadio Amalfitani',
+    sub:     'Buenos Aires · post Airbag (SAR)',
+    center:  [-58.5288, -34.6379],
+    zoom:    15.5,
+    ndvi:    0.52,
+    sar_db:  -11.3,
+    delta:   -1.8,
+    cert_hash: null,   // Se rellena con hash real
+    note:    'Compactación de suelo detectada post-show por SAR diferencial.',
+  },
+  balcarce: {
+    name:    'Campo Balcarce',
+    sub:     'Buenos Aires · NDVI trigo campaña 2026',
+    center:  [-58.230, -37.830],
+    zoom:    14,
+    ndvi:    0.71,
+    sar_db:  -9.8,
+    delta:   null,
+    note:    'Trigo en estadio vegetativo avanzado. NDVI sobre umbral óptimo.',
+  },
+  anelo: {
+    name:    'Añelo · Vaca Muerta',
+    sub:     'Neuquén · monitoreo subsidencia SAR',
+    center:  [-68.825, -38.355],
+    zoom:    13,
+    ndvi:    0.14,
+    sar_db:  -8.2,
+    delta:   -3.2,
+    note:    'Subsidencia activa en sector norte (−3.2 dB vs baseline 2024).',
+  },
+};
+
+let activeVenue = 'amalfitani';
+const layerState = { ndvi: true, sar: true };
+
+// ── MapLibre ──────────────────────────────────────────────────────────────────
+const map = new maplibregl.Map({
+  container: 'map',
+  style: {
+    version: 8,
+    sources: {
+      osm: {
+        type:        'raster',
+        tiles:       ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize:    256,
+        attribution: '© OpenStreetMap',
+      },
+    },
+    layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+  },
+  center:  VENUES.amalfitani.center,
+  zoom:    VENUES.amalfitani.zoom,
+});
+
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+
+map.on('load', () => {
+  // ── NDVI layer ──────────────────────────────────────────────────────────────
+  map.addSource('ndvi', {
+    type:  'raster',
+    tiles: [`${BACKEND}/tiles/ndvi/{z}/{x}/{y}?venue=amalfitani`],
+    tileSize: 256,
+    attribution: 'Faro Protocol · Sentinel-2 L2A Element84',
+  });
+  map.addLayer({ id: 'ndvi-layer', type: 'raster', source: 'ndvi',
+    paint: { 'raster-opacity': 0.8 } });
+
+  // ── SAR layer ───────────────────────────────────────────────────────────────
+  map.addSource('sar', {
+    type:  'raster',
+    tiles: [`${BACKEND}/tiles/sar/{z}/{x}/{y}?venue=amalfitani&opacity=120`],
+    tileSize: 256,
+    attribution: 'Faro Protocol · OPERA RTC-S1 NASA',
+  });
+  map.addLayer({ id: 'sar-layer', type: 'raster', source: 'sar',
+    paint: { 'raster-opacity': 0.4 } });
+
+  // ── Venue markers ───────────────────────────────────────────────────────────
+  Object.entries(VENUES).forEach(([id, v]) => {
+    const el = document.createElement('div');
+    el.style.cssText = `
+      width:28px;height:28px;border-radius:50%;
+      background:${id==='amalfitani'?'#c9a84c':'#444'};
+      border:2px solid ${id==='amalfitani'?'#fff':'#888'};
+      cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5);
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;color:${id==='amalfitani'?'#000':'#ccc'};font-weight:700
+    `;
+    el.textContent = id[0].toUpperCase();
+
+    new maplibregl.Marker({ element: el })
+      .setLngLat(v.center)
+      .addTo(map);
+
+    el.addEventListener('click', () => flyToVenue(id));
+  });
+});
+
+// ── Navegación entre venues ───────────────────────────────────────────────────
+function flyToVenue(id) {
+  const v = VENUES[id];
+  if (!v) return;
+  activeVenue = id;
+
+  // Actualizar card activo
+  document.querySelectorAll('.venue-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById(`card-${id}`);
+  if (card) card.classList.add('active');
+
+  // Fly map
+  map.flyTo({ center: v.center, zoom: v.zoom, duration: 1200 });
+
+  // Actualizar tiles al venue
+  ['ndvi', 'sar'].forEach(layer => {
+    const src = map.getSource(layer);
+    if (!src) return;
+    const opacity = layer === 'sar' ? '120' : '';
+    const url = `${BACKEND}/tiles/${layer}/{z}/{x}/{y}?venue=${id}${opacity?'&opacity='+opacity:''}`;
+    src.setTiles([url]);
+  });
+
+  // Actualizar stats bar
+  document.getElementById('sb-venue').textContent = v.name.split(' ').slice(0, 2).join(' ');
+  document.getElementById('sb-ndvi').textContent  = v.ndvi.toFixed(2);
+  document.getElementById('sb-sar').textContent   = `${v.sar_db} dB`;
+  document.getElementById('sb-delta').textContent = v.delta != null ? `${v.delta > 0 ? '+' : ''}${v.delta} dB` : '—';
+
+  // Popup con info del venue
+  showPopup(v.name, {
+    'Ubicación':   v.sub,
+    'NDVI':        v.ndvi.toFixed(3),
+    'SAR VV':      `${v.sar_db} dB`,
+    'Δ SAR':       v.delta != null ? `${v.delta > 0 ? '+' : ''}${v.delta} dB` : '—',
+    'Monitoreo':   'Sentinel-2 + OPERA RTC-S1',
+  }, v.note, id === 'amalfitani' ? v.cert_hash : null);
+}
+
+// ── Toggle capas ──────────────────────────────────────────────────────────────
+function toggleL(id) {
+  layerState[id] = !layerState[id];
+  const btn = document.getElementById(`t-${id}`);
+  if (btn) { btn.classList.toggle('on', layerState[id]); btn.classList.toggle('off', !layerState[id]); }
+  if (map.getLayer(`${id}-layer`)) {
+    map.setLayoutProperty(`${id}-layer`, 'visibility', layerState[id] ? 'visible' : 'none');
+  }
+}
+
+// ── Popup ─────────────────────────────────────────────────────────────────────
+function showPopup(title, rows, note, certHash) {
+  document.getElementById('pp-title').textContent = title;
+  const re = document.getElementById('pp-rows');
+  re.innerHTML = '';
+  for (const [k, v] of Object.entries(rows)) {
+    re.innerHTML += `<div class="pp-row"><span class="pp-key">${k}</span><span class="pp-val">${v}</span></div>`;
+  }
+  if (note) re.innerHTML += `<div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.5">${note}</div>`;
+
+  const certLink = document.getElementById('pp-cert-link');
+  if (certHash) {
+    certLink.style.display = 'block';
+    certLink.href = `${window.location.origin}/dale-play/verify-visual/${certHash}`;
+  } else {
+    certLink.style.display = 'none';
+  }
+
+  document.getElementById('popup').classList.add('show');
+}
+
+function showCert(venueId) {
+  const v = VENUES[venueId];
+  if (!v) return;
+  if (v.cert_hash) {
+    window.open(`/dale-play/verify-visual/${v.cert_hash}`, '_blank');
+  } else {
+    showPopup(v.name, { 'Estado': 'Certificado disponible en la plataforma Faro' },
+      'Conectate a la plataforma para ver el certificado verificado con hash blockchain.', null);
+  }
+}
+
+function closePopup() {
+  document.getElementById('popup').classList.remove('show');
+}
+
+// Cargar info inicial del venue activo
+setTimeout(() => flyToVenue('amalfitani'), 600);
+</script>
+</body>
+</html>
