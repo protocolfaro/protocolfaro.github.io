@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -504,6 +504,33 @@ body{background:var(--bg);color:var(--whi);font-family:-apple-system,BlinkMacSys
 .f3d-cut-detail{font-size:11px;color:var(--wdim);margin-top:3px;line-height:1.5}
 .f3d-photo-btn{display:block;width:100%;margin-top:8px;padding:9px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:8px;color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
 .f3d-photo-result{font-size:11px;padding:6px 0;line-height:1.5}
+/* ── Panel Roger Canonical (#roger / #f3d-section) ───────────────────────── */
+#rg-header{padding:6px 16px 10px}
+#rg-score-bar{display:flex;align-items:baseline;gap:6px;margin:6px 0}
+#rg-score-num{font-size:40px;font-weight:700;color:var(--gold);line-height:1;font-family:'Cormorant Garamond',serif}
+.rg-score-unit{font-size:13px;color:var(--wdim)}
+#rg-score-source{font-size:10px;color:var(--wdim);letter-spacing:.08em;padding-bottom:4px}
+#rg-freshness-banner{}
+.rg-layer-bar{display:flex;gap:6px;padding:6px 0;flex-wrap:wrap}
+.rg-lbtn{padding:4px 12px;border-radius:14px;border:1px solid var(--gold);background:transparent;color:var(--gold);font-size:11px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rg-lbtn.active{background:var(--gold);color:#0d1117}
+#rg-hum-slider{gap:4px;padding:4px 0}
+.rg-depth-btn{padding:3px 9px;border-radius:12px;border:1px solid rgba(201,168,76,.4);background:transparent;color:var(--wdim);font-size:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rg-depth-btn.active{background:rgba(201,168,76,.15);color:var(--gold);border-color:var(--gold)}
+#rg-presc{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.rg-block{background:var(--bg2);border-radius:8px;padding:12px 14px;border:1px solid rgba(255,255,255,.06)}
+.rg-block-title{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+.rg-semlist{display:flex;flex-direction:column;gap:5px}
+.rg-semrow{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;-webkit-tap-highlight-color:transparent}
+.rg-semrow:active{opacity:.7}
+.rg-sembadge{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.rg-semname{flex:1;font-size:13px}
+.rg-semscore{font-size:12px;color:var(--wdim);min-width:26px;text-align:right}
+.rg-terminal{background:#0a0a0a;border-radius:6px;padding:10px 12px;font-family:Epilogue,monospace,'Segoe UI',sans-serif;font-size:12px;line-height:1.75}
+.rg-line{color:var(--whi)}
+.rg-ok{color:var(--grn)}
+.rg-warn{color:var(--yel)}
+.rg-crit{color:var(--red)}
 </style>
 </head>
 <body>
@@ -642,41 +669,38 @@ body{background:var(--bg);color:var(--whi);font-family:-apple-system,BlinkMacSys
     <div id="mc-med" class="mc-module" style="display:none"></div>
   </div>
 
-  <!-- Faro 3D Satelital — canchero/roger only -->
+  <!-- Panel Roger Canonical — canchero/roger only -->
   <div id="f3d-section">
-    <div class="section-title">Vista Satelital 3D
-      <span id="f3d-live" style="width:6px;height:6px;background:var(--grn);border-radius:50%;display:inline-block;box-shadow:0 0 5px var(--grn);animation:pulse 2s infinite;margin-left:6px;vertical-align:middle"></span>
+    <!-- Sección 1: Cabezal fijo -->
+    <div id="rg-header">
+      <div class="section-title">Panel Cancha · Amalfitani
+        <span id="f3d-live" style="width:6px;height:6px;background:var(--grn);border-radius:50%;display:inline-block;box-shadow:0 0 5px var(--grn);animation:pulse 2s infinite;margin-left:6px;vertical-align:middle"></span>
+      </div>
+      <div id="rg-score-bar">
+        <span id="rg-score-num">—</span><span class="rg-score-unit">&nbsp;/100 · Hermes</span>
+      </div>
+      <div id="rg-score-source"></div>
+      <div id="rg-freshness-banner"></div>
     </div>
-    <div class="f3d-bar">
-      <button class="f3d-btn active" id="f3d-btn-2d" onclick="f3dSetView('2d')">2D</button>
-      <button class="f3d-btn" id="f3d-btn-3d" onclick="f3dSetView('3d')">3D</button>
-      <select class="f3d-select" id="f3d-shader" onchange="f3dSetShader(this.value)">
-        <option value="0">LAI Desaturado</option>
-        <option value="1">Clorofila Cab</option>
-        <option value="2">Humedad Estomática</option>
-      </select>
-      <label style="font-size:11px;display:flex;align-items:center;gap:4px;color:var(--wdim)">
-        <input type="checkbox" id="f3d-sar-chk" checked onchange="f3dToggleSAR(this.checked)">SAR
-      </label>
-      <label style="font-size:11px;display:flex;align-items:center;gap:4px;color:var(--wdim)">
-        <input type="checkbox" id="f3d-alerts-chk" checked onchange="f3dToggleAlerts(this.checked)">Alertas
-      </label>
+    <!-- Sección 2: Mapa cenital 2D -->
+    <div style="padding:0 16px">
+      <div class="rg-layer-bar">
+        <button class="rg-lbtn active" data-layer="ndvi" onclick="rgSetLayer('ndvi')">NDVI</button>
+        <button class="rg-lbtn" data-layer="sar" onclick="rgSetLayer('sar')">SAR Compactación</button>
+        <button class="rg-lbtn" data-layer="hum" onclick="rgSetLayer('hum')">Humedad Richards</button>
+      </div>
+      <div id="rg-hum-slider" style="display:none">
+        <button class="rg-depth-btn active" data-depth="5" onclick="rgSetHumDepth('5')">5cm</button>
+        <button class="rg-depth-btn" data-depth="10" onclick="rgSetHumDepth('10')">10cm</button>
+        <button class="rg-depth-btn" data-depth="20" onclick="rgSetHumDepth('20')">20cm</button>
+      </div>
+      <div id="f3d-map"></div>
     </div>
-    <div id="f3d-map"></div>
-    <div class="f3d-slider-wrap">
-      <span style="font-size:11px;color:var(--wdim)">Histórico:</span>
-      <input type="range" id="f3d-slider" min="0" max="75" value="75" oninput="f3dOnSlider(this.value)">
-      <span class="f3d-slider-label" id="f3d-slider-date">—</span>
-      <span style="font-size:10px;color:var(--gold)" id="f3d-slider-ndvi"></span>
+    <!-- Sección 3: Prescripción -->
+    <div id="rg-presc">
+      <div id="rg-semaforo"></div>
+      <div id="rg-ordenes"></div>
     </div>
-    <div id="f3d-cut-card" class="f3d-cut-card" style="display:none">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:4px">Ventana de Corte · Magnus-Tetens</div>
-      <div class="f3d-cut-status" id="f3d-cut-status">Calculando…</div>
-      <div class="f3d-cut-detail" id="f3d-cut-detail"></div>
-    </div>
-    <button class="f3d-photo-btn" onclick="f3dOpenPhoto()">📸 Subir foto del campo — Ground Truth DGCI</button>
-    <div id="f3d-photo-result" class="f3d-photo-result" style="display:none"></div>
-    <input type="file" id="f3d-photo-input" accept="image/*" style="display:none" onchange="f3dUploadPhoto(this)">
   </div>
 
   <!-- Mantenimiento programado — intendente + ejecutivo -->
@@ -2910,9 +2934,10 @@ function buildMiCampo(u,data,cfg){
 }
 
 function render(data, cfg){
-  var userSlug=slug()||'roger';
+  var userSlug=slug();
+  if(!userSlug){show('not-auth');return;}
   var u=data.usuarios&&data.usuarios[userSlug];
-  if(!u){u=(data.usuarios&&Object.values(data.usuarios)[0])||{};}
+  if(!u){show('not-auth');return;}
 
   _currentData = data; // make available for NDVI capture
 
@@ -3030,28 +3055,24 @@ init();
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════════
-   FARO 3D SATELITAL — MapLibre + WebGL2 PROSAIL Shader
-   Vista 3D integrada en panel Roger (#roger). Lazy-load MapLibre solo al activar.
+   PANEL ROGER CANONICAL — MapLibre GL + faro_assembler
+   Fuente única: GET /velez/panel-roger-canonical
+   Mapa:         GET /velez/amalfitani-geojson (GeoJSON fill layers)
+   Regla:        sin fetches directos a Supabase desde este módulo.
    ════════════════════════════════════════════════════════════════════════════ */
 (function(){
 'use strict';
 
 var FARO_BACKEND = 'https://faroprotocol-production-45fd.up.railway.app';
-var SB_URL  = 'https://xljxpzudgwhbzcnrvylo.supabase.co';
-var SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsanhwenVkZ3doYnpjbnJ2eWxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNzY2MjUsImV4cCI6MjA5NTY1MjYyNX0.csDdTYzbcalxKJ1LABVSxuCQ-Wbu8vw9kLs-U3MS8ug';
-var VENUE   = 'amalfitani';
-var CENTER  = [-58.5288, -34.6369];
+var CENTER  = [-58.5034, -34.6344];
 
 var _map        = null;
 var _mapReady   = false;
 var _mlLoaded   = false;
-var _ts         = [];
-var _shaderMode = 0;
-var _sarOn      = true;
-var _alertsOn   = true;
-var _pendingMode= null;
+var _activeLayer = 'ndvi';
+var _humDepth    = '5';
 
-/* Lazy-load MapLibre GL JS */
+/* ── Lazy-load MapLibre GL JS ────────────────────────────────────────────── */
 function _loadML(cb){
   if(_mlLoaded){ cb(); return; }
   var lnk = document.createElement('link');
@@ -3064,256 +3085,292 @@ function _loadML(cb){
   document.head.appendChild(scr);
 }
 
-/* ── init 3D section ─────────────────────────────────────────────────────── */
+/* ── Entry point — called from render() when tipo === 'canchero' ─────────── */
 function buildFaro3D(){
   var sec = document.getElementById('f3d-section');
   if(sec) sec.style.display = 'block';
-  _initMap();
-  _loadTimeseries();
-  _loadCuttingWindow();
+  _fetchCanonical();
 }
 
-/* ── MapLibre map init (lazy) ────────────────────────────────────────────── */
-function _initMap(){
-  if(_map) return;
+/* ── Fetch canonical report from assembler ───────────────────────────────── */
+function _fetchCanonical(){
+  fetch(FARO_BACKEND + '/velez/panel-roger-canonical')
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(data){
+      _renderHeader(data);
+      _initMap(data);
+      _renderPrescripcion(data);
+    })
+    .catch(function(e){
+      console.warn('panel-roger-canonical:', e);
+      var el = document.getElementById('rg-ordenes');
+      if(el) el.innerHTML = '<div class="rg-block"><div class="rg-terminal"><span class="rg-warn">Sin conexión con servidor Faro.</span></div></div>';
+    });
+}
+
+/* ── Sección 1: Cabezal ──────────────────────────────────────────────────── */
+function _renderHeader(data){
+  var hermes   = data.hermes   || {};
+  var sectores = data.sectores || {};
+  var wl       = data.weather_live || {};
+  var meta     = data.meta || {};
+
+  // Score global: sector canchero score (0-100) desde assembler
+  var cancheroScore = (sectores.canchero && sectores.canchero.score != null)
+    ? sectores.canchero.score : null;
+  var numEl = document.getElementById('rg-score-num');
+  if(numEl) numEl.textContent = cancheroScore != null ? cancheroScore : 'Sin dato';
+
+  // Fuentes activas Hermes
+  var srcEl = document.getElementById('rg-score-source');
+  var fuentes = hermes.fuentes_activas || [];
+  if(srcEl) srcEl.textContent = fuentes.length
+    ? 'Hermes · ' + fuentes.join(' + ')
+    : (hermes.humedad_estimada != null ? 'Hermes · humedad estimada' : '');
+
+  // Banner de frescura satelital
+  _renderFreshnessBanner(meta, wl);
+}
+
+function _renderFreshnessBanner(meta, wl){
+  var banner = document.getElementById('rg-freshness-banner');
+  if(!banner) return;
+  var fechaSat = meta.fecha_satelite || meta.fecha || null;
+  if(!fechaSat){ banner.innerHTML = ''; return; }
+  var daysDiff = (Date.now() - new Date(fechaSat).getTime()) / 86400000;
+  if(daysDiff > 7){
+    banner.innerHTML = '<div style="background:#1a1a1a;border-left:4px solid #c9a84c;padding:12px;margin:8px 0;font-size:12px;border-radius:0 6px 6px 0">' +
+      '☁️ Datos ópticos en persistencia — Pasada ' + fechaSat + ' bloqueada por nubosidad. SAR Sentinel-1 activo HOY.</div>';
+  } else {
+    banner.innerHTML = '<div style="background:#0a1a0a;border-left:4px solid #4cad72;padding:12px;margin:8px 0;font-size:12px;border-radius:0 6px 6px 0">' +
+      '✓ Datos frescos — ' + fechaSat + ' · Sentinel-2 + SAR activos.</div>';
+  }
+}
+
+/* ── Sección 2: Mapa cenital 2D ──────────────────────────────────────────── */
+function _initMap(canonicalData){
+  if(_map){ _loadGeoJSON(canonicalData); return; }
   _loadML(function(){
     var container = document.getElementById('f3d-map');
     if(!container) return;
     _map = new maplibregl.Map({
       container: 'f3d-map',
-      style: {
-        version: 8,
-        glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-        sources: {
-          osm: { type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                 tileSize:256, maxzoom:19, attribution:'© OpenStreetMap' }
-        },
-        layers: [{ id:'osm', type:'raster', source:'osm' }]
+      style:{
+        version:8,
+        glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+        sources:{ osm:{ type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                        tileSize:256, maxzoom:19, attribution:'© OpenStreetMap' } },
+        layers:[{ id:'osm', type:'raster', source:'osm' }]
       },
-      center: CENTER, zoom: 15.4, pitch: 0, bearing: 0,
+      center: CENTER, zoom: 17, pitch: 0, bearing: 0,
     });
-    _map.addControl(new maplibregl.NavigationControl({ visualizePitch:true }), 'bottom-right');
+    _map.addControl(new maplibregl.NavigationControl({ visualizePitch:false }), 'bottom-right');
     _map.on('load', function(){
       _mapReady = true;
-      _addNdvi();
-      _addSar();
-      _addAlerts();
-      _installShader();
-      _loadAlerts();
-      if(_pendingMode){var m=_pendingMode;_pendingMode=null;_map.easeTo({pitch:m==='3d'?55:0,bearing:m==='3d'?-20:0,zoom:m==='3d'?15.2:15.4,duration:700});}
+      _loadGeoJSON(canonicalData);
     });
   });
 }
 
-function _addNdvi(){
-  _map.addSource('ndvi', { type:'raster', tileSize:256, attribution:'Faro · Sentinel-2',
-    tiles:[FARO_BACKEND+'/tiles/ndvi/{z}/{x}/{y}?venue=velez'] });
-  _map.addLayer({ id:'ndvi-l', type:'raster', source:'ndvi', paint:{'raster-opacity':0.82} });
+function _loadGeoJSON(canonicalData){
+  fetch(FARO_BACKEND + '/velez/amalfitani-geojson')
+    .then(function(r){ return r.json(); })
+    .then(function(geojson){
+      if(_map.getSource('canchas')) {
+        _map.getSource('canchas').setData(geojson);
+        return;
+      }
+      _map.addSource('canchas', { type:'geojson', data: geojson });
+      _addNdviLayer();
+      _addSarLayer();
+      _addHumLayer();
+      _addOutlineLayer();
+      _addPopups();
+      _setActiveLayer('ndvi');
+    })
+    .catch(function(e){ console.warn('amalfitani-geojson:', e); });
 }
-function _addSar(){
-  _map.addSource('sar', { type:'raster', tileSize:256, attribution:'Faro · OPERA RTC-S1',
-    tiles:[FARO_BACKEND+'/tiles/sar/{z}/{x}/{y}?venue=velez&opacity=102'] });
-  _map.addLayer({ id:'sar-l', type:'raster', source:'sar', paint:{'raster-opacity':0.40} });
+
+var _RDYLGN = ['interpolate',['linear'],['get','ndvi'],
+  -0.1,'#d73027', 0.05,'#fc8d59', 0.2,'#fee090',
+   0.35,'#d9ef8b', 0.5,'#91cf60', 0.65,'#1a9641'];
+
+function _addNdviLayer(){
+  _map.addLayer({ id:'ndvi-fill', type:'fill', source:'canchas',
+    paint:{ 'fill-color':['case',['!=',['get','ndvi'],null], _RDYLGN, '#2a2a2a'],
+            'fill-opacity':0.8 } });
 }
-function _addAlerts(){
-  _map.addSource('alerts', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
-  _map.addLayer({ id:'alerts-c', type:'circle', source:'alerts', paint:{
-    'circle-radius': 8,
-    'circle-color': ['case',
-      ['==',['get','nivel'],'rojo'], '#e05252',
-      ['==',['get','nivel'],'amarillo'], '#e0b84c', '#4cad72'],
-    'circle-stroke-width': 2, 'circle-stroke-color': 'rgba(255,255,255,.35)', 'circle-opacity': 0.95
-  }});
-  _map.on('click', 'alerts-c', function(e){
-    var p = e.features[0].properties;
-    new maplibregl.Popup().setLngLat(e.lngLat)
-      .setHTML('<div style="color:#111;font-size:12px;max-width:200px"><b>'+p.nivel+'</b><br>'+(p.motivo||'')+'<br><em>'+(p.recomendacion||'')+'</em></div>')
-      .addTo(_map);
+function _addSarLayer(){
+  var sarColor = ['interpolate',['linear'],['get','entropia_h'],
+    0.0,'#e53e3e', 0.3,'#e53e3e', 0.45,'#ed8936', 0.6,'#ecc94b', 0.75,'#68d391', 1.0,'#68d391'];
+  _map.addLayer({ id:'sar-fill', type:'fill', source:'canchas', layout:{'visibility':'none'},
+    paint:{ 'fill-color':['case',['!=',['get','entropia_h'],null], sarColor, '#2a2a2a'],
+            'fill-opacity':0.8 } });
+}
+function _addHumLayer(){
+  var humColor = ['interpolate',['linear'],['get','theta_5cm'],
+    0.0,'#f7fbff', 0.08,'#c6dbef', 0.15,'#9ecae1', 0.22,'#3182bd', 0.35,'#08306b'];
+  _map.addLayer({ id:'hum-fill', type:'fill', source:'canchas', layout:{'visibility':'none'},
+    paint:{ 'fill-color':['case',['!=',['get','theta_5cm'],null], humColor, '#2a2a2a'],
+            'fill-opacity':0.8 } });
+}
+function _addOutlineLayer(){
+  _map.addLayer({ id:'canchas-outline', type:'line', source:'canchas',
+    paint:{ 'line-color':'rgba(201,168,76,0.5)', 'line-width':1 } });
+}
+
+function _addPopups(){
+  ['ndvi-fill','sar-fill','hum-fill'].forEach(function(lid){
+    _map.on('click', lid, function(e){
+      var p = e.features[0].properties;
+      var fmt = function(v){ return (v != null && v !== 'null') ? parseFloat(v).toFixed(3) : 'Sin dato'; };
+      new maplibregl.Popup({ closeButton:false, maxWidth:'220px' })
+        .setLngLat(e.lngLat)
+        .setHTML(
+          '<div style="color:#111;font-size:12px;line-height:1.7">' +
+          '<b>' + (p.nombre || p.id || '—') + '</b><br>' +
+          'NDVI: ' + fmt(p.ndvi) + '<br>' +
+          'SAR H: ' + fmt(p.entropia_h) + '<br>' +
+          'θ 5cm / 10cm / 20cm: ' + fmt(p.theta_5cm) + ' / ' + fmt(p.theta_10cm) + ' / ' + fmt(p.theta_20cm) +
+          '</div>'
+        ).addTo(_map);
+    });
+    _map.on('mouseenter', lid, function(){ _map.getCanvas().style.cursor = 'pointer'; });
+    _map.on('mouseleave', lid, function(){ _map.getCanvas().style.cursor = ''; });
   });
 }
 
-/* ── WebGL2 PROSAIL Fragment Shader ─────────────────────────────────────────
-   Tres modos calculados en la GPU del cliente. Cero costo Railway.
-   Usa el tile NDVI pre-renderizado; decodifica NDVI del colormap verde-rojo
-   y recalcula EVI2-proxy/LAI, Clorofila Cab, Humedad Estomática.           */
-var _VERT = 'attribute vec2 a_pos;varying vec2 v_tc;void main(){v_tc=a_pos*.5+.5;gl_Position=vec4(a_pos,0.,1.);}';
-var _FRAG = [
-  'precision highp float;',
-  'varying vec2 v_tc;',
-  'uniform sampler2D u_tile;',
-  'uniform int u_mode;',
-  'void main(){',
-  '  vec4 px=texture2D(u_tile,v_tc);',
-  '  float r=px.r,g=px.g;',
-  '  float ndvi=clamp((g-r)/max(g+r+.001,.001),-1.,1.);',
-  '  float val;',
-  '  if(u_mode==0){',
-  '    float e=2.5*ndvi/max(1.+ndvi*2.4+1.,.001);',
-  '    val=clamp(3.61*e-.18,0.,5.)/5.;',
-  '  } else if(u_mode==1){',
-  '    float ratio=(1.+ndvi)/max(1.-ndvi+.001,.001);',
-  '    val=clamp(ratio*12.5/80.,0.,1.);',
-  '  } else {',
-  '    val=clamp((ndvi+1.)*.5,0.,1.);',
-  '  }',
-  '  vec3 s=vec3(0.,.8,.2);vec3 c=vec3(.9,.1,.1);',
-  '  vec3 col=mix(c,s,val);',
-  '  gl_FragColor=vec4(col,px.a*.85);',
-  '}'
-].join('');
-
-var _prog=null, _aBuf=null, _uTile=null, _uMode=null, _shLayer=null;
-
-function _installShader(){
-  if(!_mapReady||!_map) return;
-  var gl = _map.getCanvas().getContext('webgl2') || _map.getCanvas().getContext('webgl');
-  if(!gl) return;
-  function _cmp(src,type){ var s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); return s; }
-  _prog = gl.createProgram();
-  gl.attachShader(_prog, _cmp(_VERT, gl.VERTEX_SHADER));
-  gl.attachShader(_prog, _cmp(_FRAG, gl.FRAGMENT_SHADER));
-  gl.linkProgram(_prog);
-  var aPos = gl.getAttribLocation(_prog,'a_pos');
-  _uTile   = gl.getUniformLocation(_prog,'u_tile');
-  _uMode   = gl.getUniformLocation(_prog,'u_mode');
-  _aBuf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER,_aBuf);
-  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
-  _shLayer = {
-    id:'prosail', type:'custom',
-    onAdd:function(){},
-    render:function(gl2){
-      var src=_map.getSource('ndvi'); if(!src) return;
-      var tiles=src._tiles||{}; var keys=Object.keys(tiles); if(!keys.length) return;
-      var tile=tiles[keys[0]]; if(!tile||!tile.texture) return;
-      gl2.useProgram(_prog);
-      gl2.bindBuffer(gl2.ARRAY_BUFFER,_aBuf);
-      var aP=gl2.getAttribLocation(_prog,'a_pos');
-      gl2.enableVertexAttribArray(aP); gl2.vertexAttribPointer(aP,2,gl2.FLOAT,false,0,0);
-      gl2.activeTexture(gl2.TEXTURE0); gl2.bindTexture(gl2.TEXTURE_2D,tile.texture.texture);
-      gl2.uniform1i(_uTile,0); gl2.uniform1i(_uMode,_shaderMode);
-      gl2.enable(gl2.BLEND); gl2.blendFunc(gl2.SRC_ALPHA,gl2.ONE_MINUS_SRC_ALPHA);
-      gl2.drawArrays(gl2.TRIANGLE_STRIP,0,4);
-    }
-  };
-  try{ _map.addLayer(_shLayer,'ndvi-l'); }catch(e){}
-}
-
-/* ── View toggle ─────────────────────────────────────────────────────────── */
-window.f3dSetView = function(mode){
-  document.getElementById('f3d-btn-2d').classList.toggle('active',mode==='2d');
-  document.getElementById('f3d-btn-3d').classList.toggle('active',mode==='3d');
-  if(!_map||!_mapReady){_pendingMode=mode;if(!_map)_initMap();return;}
-  _map.easeTo({pitch:mode==='3d'?55:0,bearing:mode==='3d'?-20:0,zoom:mode==='3d'?15.2:15.4,duration:700});
+window.rgSetLayer = function(layer){
+  _activeLayer = layer;
+  document.querySelectorAll('.rg-lbtn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.querySelector('.rg-lbtn[data-layer="' + layer + '"]');
+  if(btn) btn.classList.add('active');
+  var humSlider = document.getElementById('rg-hum-slider');
+  if(humSlider) humSlider.style.display = layer === 'hum' ? 'flex' : 'none';
+  _setActiveLayer(layer);
 };
 
-window.f3dSetShader = function(v){
-  _shaderMode = parseInt(v,10);
-  if(_map&&_mapReady) _map.triggerRepaint();
-};
-window.f3dToggleSAR = function(on){
-  _sarOn=on; if(_map&&_map.getLayer('sar-l')) _map.setLayoutProperty('sar-l','visibility',on?'visible':'none');
-};
-window.f3dToggleAlerts = function(on){
-  _alertsOn=on; if(_map&&_map.getLayer('alerts-c')) _map.setLayoutProperty('alerts-c','visibility',on?'visible':'none');
-};
-
-/* ── Temporal slider ─────────────────────────────────────────────────────── */
-function _loadTimeseries(){
-  fetch(SB_URL+'/rest/v1/field_timeseries?venue_id=eq.'+VENUE+'&order=fecha.asc&limit=500',
-    {headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}})
-    .then(function(r){return r.json();})
-    .then(function(rows){
-      _ts = Array.isArray(rows)&&rows.length ? rows : _fallbackTs();
-      var sl=document.getElementById('f3d-slider');
-      if(sl){sl.max=_ts.length-1;sl.value=_ts.length-1;}
-      window.f3dOnSlider(_ts.length-1);
-    }).catch(function(){_ts=_fallbackTs();window.f3dOnSlider(75);});
-}
-function _fallbackTs(){
-  var base=new Date('2020-01-08');
-  return Array.from({length:76},function(_,i){
-    var d=new Date(base);d.setDate(d.getDate()+i*25);
-    return {fecha:d.toISOString().slice(0,10),ndvi:+(0.45+0.25*Math.sin(i/75*Math.PI*3+1)).toFixed(3),fuente:'fallback'};
+function _setActiveLayer(layer){
+  if(!_map || !_mapReady) return;
+  var layerMap = { ndvi:'ndvi-fill', sar:'sar-fill', hum:'hum-fill' };
+  Object.values(layerMap).forEach(function(lid){
+    if(_map.getLayer(lid)) _map.setLayoutProperty(lid,'visibility','none');
   });
+  if(layerMap[layer] && _map.getLayer(layerMap[layer]))
+    _map.setLayoutProperty(layerMap[layer],'visibility','visible');
 }
-window.f3dOnSlider = function(idx){
-  idx=parseInt(idx,10);
-  var row=_ts[idx]||{};
-  var dateEl=document.getElementById('f3d-slider-date');
-  var ndviEl=document.getElementById('f3d-slider-ndvi');
-  if(dateEl) dateEl.textContent=row.fecha||'—';
-  if(ndviEl) ndviEl.textContent=row.ndvi!=null?'NDVI '+parseFloat(row.ndvi).toFixed(3):'';
-  if(_map&&_mapReady&&_map.getSource('ndvi')&&row.fecha){
-    _map.getSource('ndvi').setTiles([FARO_BACKEND+'/tiles/ndvi/{z}/{x}/{y}?venue=velez&date='+row.fecha]);
+
+window.rgSetHumDepth = function(depth){
+  _humDepth = depth;
+  document.querySelectorAll('.rg-depth-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.depth === depth);
+  });
+  if(!_map || !_map.getLayer('hum-fill')) return;
+  var field = 'theta_' + depth + 'cm';
+  _map.setPaintProperty('hum-fill','fill-color',['case',
+    ['!=',['get',field],null],
+    ['interpolate',['linear'],['get',field],
+      0.0,'#f7fbff', 0.08,'#c6dbef', 0.15,'#9ecae1', 0.22,'#3182bd', 0.35,'#08306b'],
+    '#2a2a2a']);
+};
+
+window.rgFocusCancha = function(cid){
+  if(!_map || !cid) return;
+  var source = _map.getSource('canchas');
+  if(!source || !source._data) return;
+  var feat = (source._data.features || []).find(function(f){ return f.properties.id === cid; });
+  if(!feat) return;
+  var geom = feat.geometry;
+  if(geom.type === 'Point'){
+    _map.flyTo({ center: geom.coordinates, zoom: 18, duration: 600 });
+  } else if(geom.type === 'Polygon'){
+    _map.flyTo({ center: geom.coordinates[0][0], zoom: 18, duration: 600 });
   }
 };
 
-/* ── Alertas Paperclip desde Supabase ───────────────────────────────────── */
-function _loadAlerts(){
-  fetch(SB_URL+'/rest/v1/paperclip_decisions?venue_id=eq.'+VENUE+'&order=created_at.desc&limit=30',
-    {headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}})
-    .then(function(r){return r.json();})
-    .then(function(rows){
-      if(!Array.isArray(rows)) return;
-      var feats=rows.filter(function(r){return r.lat&&r.lon;}).map(function(r){
-        return {type:'Feature',geometry:{type:'Point',coordinates:[parseFloat(r.lon),parseFloat(r.lat)]},properties:r};
-      });
-      if(_map&&_map.getSource('alerts'))
-        _map.getSource('alerts').setData({type:'FeatureCollection',features:feats});
-    }).catch(function(){});
+/* ── Sección 3: Prescripción ─────────────────────────────────────────────── */
+function _renderPrescripcion(data){
+  _renderSemaforo(data);
+  _renderOrdenes(data);
 }
 
-/* ── Ventana de Corte (Magnus-Tetens desde backend) ─────────────────────── */
-function _loadCuttingWindow(){
-  var wl=(typeof _currentData!=='undefined'&&_currentData)?(_currentData.weather_live||{}):{};
-  var temp=wl.temp_max_semanal||18;
-  var rh=wl.rh_media||75;
-  var hum=wl.humedad_suelo_pct||22;
-  var hSuc=Math.max(50,350*(1-Math.min(hum/40,1)));
-  var url=FARO_BACKEND+'/api/v1/field-analysis/cutting-window?temp='+temp+'&rh='+rh+'&h_suction='+Math.round(hSuc);
-  fetch(url)
-    .then(function(r){return r.json();})
-    .then(function(d){
-      var card=document.getElementById('f3d-cut-card');
-      var st=document.getElementById('f3d-cut-status');
-      var dt=document.getElementById('f3d-cut-detail');
-      if(!card||!st) return;
-      card.style.display='block';
-      var cp=d.cutting_prescription||{};
-      var s=cp.status_window||'—';
-      st.textContent=s;
-      st.className='f3d-cut-status '+(s.includes('PTIMA')?'optima':s.includes('TRINGIDA')?'restringida':'bloqueo');
-      if(dt) dt.textContent=(cp.mechanical_action||'')+' · '+cp.prescribed_height_mm+' mm · '+cp.reel_speed_rpm+' RPM · Rocío: '+d.dew_point_c+'°C';
-    }).catch(function(){});
+var _SEM_HEX = { verde:'#4cad72', amarillo:'#c9a84c', rojo:'#E53E3E' };
+
+function _renderSemaforo(data){
+  var canchas = ((data.sectores || {}).canchero || {}).canchas || [];
+  var el = document.getElementById('rg-semaforo');
+  if(!el) return;
+  var html = '<div class="rg-block"><div class="rg-block-title">Estado de Canchas</div><div class="rg-semlist">';
+  if(!canchas.length){
+    html += '<span style="color:var(--wdim);font-size:12px">Sin dato</span>';
+  } else {
+    canchas.forEach(function(c){
+      var color = _SEM_HEX[c.sem] || '#666';
+      html += '<div class="rg-semrow" onclick="rgFocusCancha(\'' + (c.id || '') + '\')">' +
+        '<span class="rg-sembadge" style="background:' + color + '"></span>' +
+        '<span class="rg-semname">' + (c.nombre || c.id || '—') + '</span>' +
+        '<span class="rg-semscore">' + (c.score != null ? c.score : '—') + '</span>' +
+        '</div>';
+    });
+  }
+  html += '</div></div>';
+  el.innerHTML = html;
 }
 
-/* ── Photo upload — Ground Truth DGCI ───────────────────────────────────── */
-window.f3dOpenPhoto = function(){
-  var inp=document.getElementById('f3d-photo-input'); if(inp) inp.click();
-};
-window.f3dUploadPhoto = function(inp){
-  var file=inp.files[0]; if(!file) return;
-  var fieldId=(typeof slug==='function')?(slug()||'amalfitani'):'amalfitani';
-  var fd=new FormData();
-  fd.append('venue_id',VENUE); fd.append('field_id',fieldId); fd.append('file',file);
-  var res=document.getElementById('f3d-photo-result');
-  if(res){res.style.display='block';res.style.color='var(--wdim)';res.textContent='Analizando imagen…';}
-  fetch(FARO_BACKEND+'/api/v1/field-analysis/upload-photo',{method:'POST',body:fd})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(res){
-        if(d.status==='success'){
-          res.textContent='Cobertura foliar: '+d.cobertura_foliar_pct+'% · DGCI: '+d.dgci_real+(d.override_active?' ✅ Override activo':'');
-          res.style.color='var(--grn)';
-        } else { res.textContent='Error: '+(d.error||'desconocido'); res.style.color='var(--red)'; }
-      }
-    }).catch(function(e){ if(res){res.textContent='Error: '+e;res.style.color='var(--red)';} });
-  inp.value='';
-};
+function _renderOrdenes(data){
+  var el = document.getElementById('rg-ordenes');
+  if(!el) return;
+  var hermes  = data.hermes  || {};
+  var wl      = data.weather_live || {};
+  var canchas = ((data.sectores || {}).canchero || {}).canchas || [];
+  var lines   = [];
+
+  // Riego: solo si deficit > 3 mm
+  var deficit = wl.deficit_hidrico_mm != null ? parseFloat(wl.deficit_hidrico_mm) : null;
+  if(deficit != null && deficit > 3){
+    var min = wl.riego_min_sector || Math.round(deficit * 6);
+    var target = canchas.find(function(c){ return c.sem === 'rojo' || c.sem === 'amarillo'; })
+                 || canchas[0];
+    lines.push({ cls:'rg-warn', txt:'▸ Regar ' + min + ' min en ' + (target ? (target.nombre || target.id) : 'campo principal') });
+  }
+
+  // Fungicida: smith_kerns_pct > 20 Y temp_superficie_c > 18 en alguna cancha
+  var sk = wl.smith_kerns_pct != null ? parseFloat(wl.smith_kerns_pct) : null;
+  if(sk != null && sk > 20){
+    var hotCancha = canchas.find(function(c){
+      return c.temp_superficie_c != null && parseFloat(c.temp_superficie_c) > 18;
+    });
+    if(hotCancha){
+      lines.push({ cls:'rg-crit', txt:'▸ Aplicar fungicida en ' + (hotCancha.nombre || hotCancha.id) + ' — riesgo ' + Math.round(sk) + '%' });
+    }
+  }
+
+  // Compactación: entropia_h < 0.3 en alguna cancha
+  canchas.forEach(function(c){
+    if(c.entropia_h != null && parseFloat(c.entropia_h) < 0.3){
+      lines.push({ cls:'rg-crit', txt:'▸ Aireación urgente en ' + (c.nombre || c.id) + ' (H=' + parseFloat(c.entropia_h).toFixed(2) + ')' });
+    }
+  });
+
+  // Alertas Hermes directas
+  (hermes.alertas || []).forEach(function(a){
+    if(typeof a === 'string' && !lines.some(function(l){ return l.txt.includes(a.slice(0,20)); }))
+      lines.push({ cls:'rg-warn', txt:'▸ ' + a });
+  });
+
+  var html = '<div class="rg-block"><div class="rg-block-title">Órdenes Hermes</div><div class="rg-terminal">';
+  if(!lines.length){
+    html += '<span class="rg-ok">✓ Sin acciones requeridas esta semana</span>';
+  } else {
+    html += lines.map(function(l){ return '<div class="' + l.cls + '">' + l.txt + '</div>'; }).join('');
+  }
+  html += '</div></div>';
+  el.innerHTML = html;
+}
 
 /* Expose to main IIFE scope */
 window.buildFaro3D = buildFaro3D;
+
 
 })();
 </script>
