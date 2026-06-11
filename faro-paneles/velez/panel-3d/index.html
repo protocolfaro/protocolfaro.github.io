@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Panel Agro 3D · Vélez · Faro Protocol</title>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/deck.gl@9.0.0/dist.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-scale@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
+<style>
+  :root {
+    --gold:       #c9a84c;
+    --gold-dim:   #8a6f2e;
+    --bg:         #0a0a0a;
+    --panel:      #111111;
+    --panel2:     #1a1a1a;
+    --border:     #2a2a2a;
+    --text:       #e8e8e8;
+    --text-muted: #777;
+    --red:        #e05050;
+    --green:      #4caf7d;
+    --yellow:     #e0c040;
+    --radius:     8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Topbar ─────────────────────────────────────────────────────────────── */
+  #topbar {
+    height: 52px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  #topbar .logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  #topbar .venue-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex: 1;
+  }
+
+  #topbar .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    flex-shrink: 0;
+  }
+
+  /* ── Map container ──────────────────────────────────────────────────────── */
+  #map-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #map { width: 100%; height: 100%; }
+
+  /* ── Side panel ─────────────────────────────────────────────────────────── */
+  #sidepanel {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 264px;
+    background: rgba(17, 17, 17, 0.95);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+    z-index: 5;
+    overflow: hidden;
+  }
+
+  #sidepanel .sp-header {
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  /* ── Layer toggles ──────────────────────────────────────────────────────── */
+  .layer-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .layer-row:hover { background: var(--panel2); }
+
+  .layer-row .layer-icon {
+    width: 28px; height: 16px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .layer-icon.ndvi      { background: linear-gradient(90deg, #a50026, #f46d43, #fee08b, #66bd63, #006837); }
+  .layer-icon.sar       { background: linear-gradient(90deg, #111, #888); }
+  .layer-icon.alerts    { background: radial-gradient(circle, #e05050, #600); }
+  .layer-icon.canchas   { background: radial-gradient(circle at 30% 50%, #006837 0%, #fee08b 60%, #a50026 100%); border-radius: 50%; }
+  .layer-icon.sarcolumn { background: linear-gradient(180deg, #e05050 0%, #e0c040 50%, #4caf7d 100%); }
+
+  .layer-row .layer-name { font-size: 12px; flex: 1; }
+  .layer-row .layer-sub  { font-size: 10px; color: var(--text-muted); }
+
+  .toggle-btn {
+    width: 34px; height: 18px;
+    border-radius: 9px;
+    background: var(--border);
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background .2s;
+    flex-shrink: 0;
+  }
+  .toggle-btn.on  { background: var(--gold); }
+  .toggle-btn::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: white;
+    transition: transform .2s;
+  }
+  .toggle-btn.on::after { transform: translateX(16px); }
+
+  /* ── Observation slider ──────────────────────────────────────────────────── */
+  #slider-section {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #slider-section .sl-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #slider-section .sl-label strong {
+    color: var(--gold);
+    font-size: 11px;
+  }
+
+  #obs-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  #obs-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+  }
+
+  #obs-date {
+    font-size: 11px;
+    color: var(--text);
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  /* ── NDVI stats ──────────────────────────────────────────────────────────── */
+  #stats-section { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .stat-card {
+    background: var(--panel2);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+
+  .stat-card .s-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+  .stat-card .s-val   { font-size: 18px; font-weight: 700; color: var(--gold); margin-top: 2px; }
+  .stat-card .s-unit  { font-size: 9px; color: var(--text-muted); }
+
+  /* ── 3D toggle ───────────────────────────────────────────────────────────── */
+  #view-toggle {
+    display: flex;
+    padding: 10px 14px;
+    gap: 6px;
+  }
+
+  .vt-btn {
+    flex: 1;
+    padding: 7px 0;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .vt-btn.active {
+    background: var(--gold);
+    color: #000;
+    border-color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* ── Popup ───────────────────────────────────────────────────────────────── */
+  #map-popup {
+    position: absolute;
+    bottom: 80px;
+    left: 12px;
+    width: calc(100% - 24px);
+    max-width: 320px;
+    background: rgba(17, 17, 17, 0.97);
+    border: 1px solid var(--gold-dim);
+    border-radius: var(--radius);
+    padding: 14px;
+    z-index: 10;
+    display: none;
+    backdrop-filter: blur(8px);
+  }
+
+  #map-popup.visible { display: block; }
+
+  #map-popup .pp-close {
+    position: absolute;
+    top: 8px; right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  #map-popup h4 {
+    font-size: 12px;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 10px;
+  }
+
+  .pp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .pp-row:last-child { border-bottom: none; }
+  .pp-row .pp-key    { color: var(--text-muted); }
+  .pp-row .pp-val    { font-weight: 600; }
+
+  .pp-rec {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: var(--panel2);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ── Alerts list ─────────────────────────────────────────────────────────── */
+  #alerts-list {
+    padding: 10px 14px;
+    max-height: 140px;
+    overflow-y: auto;
+  }
+
+  .alert-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .alert-item:last-child { border-bottom: none; }
+
+  .alert-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .alert-dot.rojo    { background: var(--red); }
+  .alert-dot.amarillo{ background: var(--yellow); }
+  .alert-dot.verde   { background: var(--green); }
+
+  .alert-text { flex: 1; color: var(--text-muted); }
+  .alert-date { color: var(--text-muted); font-size: 10px; flex-shrink: 0; }
+
+  /* ── Bottom bar ──────────────────────────────────────────────────────────── */
+  #bottombar {
+    height: 44px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  #bottombar .bb-info {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  #bottombar .bb-logo {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+  }
+
+  /* ── Terminal readout (deck.gl picks) ───────────────────────────────────── */
+  #terminal {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 9px 14px;
+    background: rgba(8, 8, 8, 0.93);
+    border-top: 1px solid var(--gold-dim);
+    font-size: 11px;
+    color: var(--gold);
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    letter-spacing: .04em;
+    z-index: 6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+
+  /* ── Mobile ──────────────────────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    #sidepanel {
+      width: calc(100% - 24px);
+      top: auto;
+      bottom: 52px;
+      right: 12px;
+      left: 12px;
+      max-height: 55vh;
+      overflow-y: auto;
+    }
+
+    #map-popup {
+      bottom: auto;
+      top: 60px;
+      max-width: none;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- Topbar -->
+<div id="topbar">
+  <span class="logo">Faro Protocol</span>
+  <span class="venue-label">Vélez Sársfield · Campo Sede</span>
+  <span class="status-dot" title="Datos actualizados"></span>
+</div>
+
+<!-- Map container -->
+<div id="map-wrap">
+  <div id="map"></div>
+
+  <!-- Side panel -->
+  <div id="sidepanel">
+    <div class="sp-header">Capas activas</div>
+
+    <!-- NDVI toggle -->
+    <div class="layer-row" onclick="toggleLayer('ndvi')">
+      <div class="layer-icon ndvi"></div>
+      <div style="flex:1">
+        <div class="layer-name">NDVI Sentinel-2</div>
+        <div class="layer-sub">Índice vegetación · RdYlGn</div>
+      </div>
+      <button class="toggle-btn on" id="toggle-ndvi" aria-label="Toggle NDVI"></button>
+    </div>
+
+    <!-- SAR toggle -->
+    <div class="layer-row" onclick="toggleLayer('sar')">
+      <div class="layer-icon sar"></div>
+      <div style="flex:1">
+        <div class="layer-name">SAR Backscatter VV</div>
+        <div class="layer-sub">OPERA RTC-S1 · 40% opacidad</div>
+      </div>
+      <button class="toggle-btn on" id="toggle-sar" aria-label="Toggle SAR"></button>
+    </div>
+
+    <!-- Alerts toggle -->
+    <div class="layer-row" onclick="toggleLayer('alerts')">
+      <div class="layer-icon alerts"></div>
+      <div style="flex:1">
+        <div class="layer-name">Alertas Paperclip</div>
+        <div class="layer-sub">Supabase · tiempo real</div>
+      </div>
+      <button class="toggle-btn on" id="toggle-alerts" aria-label="Toggle Alertas"></button>
+    </div>
+
+    <!-- NDVI puntos deck.gl -->
+    <div class="layer-row" onclick="toggleLayer('canchas')">
+      <div class="layer-icon canchas"></div>
+      <div style="flex:1">
+        <div class="layer-name">NDVI · Puntos Nagix</div>
+        <div class="layer-sub">deck.gl ScatterplotLayer · RdYlGn</div>
+      </div>
+      <button class="toggle-btn on" id="toggle-canchas" aria-label="Toggle NDVI puntos"></button>
+    </div>
+
+    <!-- SAR columnas 3D deck.gl -->
+    <div class="layer-row" onclick="toggleLayer('sarColumns')">
+      <div class="layer-icon sarcolumn"></div>
+      <div style="flex:1">
+        <div class="layer-name">SAR · Columnas 3D</div>
+        <div class="layer-sub">deck.gl ColumnLayer · compactación</div>
+      </div>
+      <button class="toggle-btn on" id="toggle-sarColumns" aria-label="Toggle SAR columnas"></button>
+    </div>
+
+    <!-- Observation slider -->
+    <div id="slider-section">
+      <div class="sl-label">
+        <span>Serie temporal</span>
+        <strong id="obs-counter">76 obs.</strong>
+      </div>
+      <input type="range" id="obs-slider" min="0" max="75" value="75">
+      <div id="obs-date">Última observación disponible</div>
+    </div>
+
+    <!-- Stats -->
+    <div id="stats-section">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="s-label">NDVI</div>
+          <div class="s-val" id="stat-ndvi">—</div>
+          <div class="s-unit">campo completo</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-label">BSI</div>
+          <div class="s-val" id="stat-bsi">—</div>
+          <div class="s-unit">suelo desnudo</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-label">NDWI</div>
+          <div class="s-val" id="stat-ndwi">—</div>
+          <div class="s-unit">humedad</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-label">SAR dB</div>
+          <div class="s-val" id="stat-sar">—</div>
+          <div class="s-unit">backscatter VV</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2D / 3D toggle -->
+    <div id="view-toggle">
+      <button class="vt-btn active" id="btn-2d" onclick="setView('2d')">2D</button>
+      <button class="vt-btn"        id="btn-3d" onclick="setView('3d')">3D</button>
+    </div>
+
+    <!-- Alerts list -->
+    <div class="sp-header" style="padding-top:8px">Alertas recientes</div>
+    <div id="alerts-list">
+      <div class="alert-item">
+        <div class="alert-dot amarillo"></div>
+        <div class="alert-text">Cargando alertas…</div>
+        <div class="alert-date"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal readout -->
+  <div id="terminal">▸ Seleccioná una cancha para ver datos satelitales</div>
+
+  <!-- Popup -->
+  <div id="map-popup">
+    <button class="pp-close" onclick="closePopup()">×</button>
+    <h4 id="pp-title">Punto seleccionado</h4>
+    <div id="pp-rows"></div>
+    <div class="pp-rec" id="pp-rec"></div>
+  </div>
+</div>
+
+<!-- Bottom bar -->
+<div id="bottombar">
+  <div class="bb-info" id="bb-info">Cargando datos satelitales…</div>
+  <div class="bb-logo">Faro Protocol · 2026</div>
+</div>
+
+<script>
+'use strict';
+
+// ── Configuración ──────────────────────────────────────────────────────────────
+// Ajustar BACKEND_URL con la URL de Railway del servidor
+const CFG = {
+  BACKEND:      window.FARO_BACKEND || 'https://faroprotocol-production.up.railway.app',
+  SUPABASE_URL: window.FARO_SUPABASE_URL || '',
+  SUPABASE_KEY: window.FARO_SUPABASE_KEY || '',
+  CENTER:       [-58.5290, -34.6360],   // Vélez campo sede
+  ZOOM:         15.5,
+};
+
+// ── Serie temporal sintética (76 observaciones) ────────────────────────────────
+// Cada observación: {date, ndvi, bsi, ndwi, sar_db}
+const OBS = (() => {
+  const obs = [];
+  const baseDate = new Date('2024-01-08');
+  for (let i = 0; i < 76; i++) {
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() + i * 5);   // cada ~5 días (Sentinel-2 revisita)
+    const t = i / 75;
+    obs.push({
+      date:   d.toISOString().slice(0, 10),
+      ndvi:   +(0.45 + 0.25 * Math.sin(t * Math.PI * 3 + 1) + (Math.random() - .5) * .05).toFixed(3),
+      bsi:    +(0.10 + 0.08 * Math.cos(t * Math.PI * 2)     + (Math.random() - .5) * .03).toFixed(3),
+      ndwi:   +(-0.05 + 0.15 * Math.sin(t * Math.PI * 4)    + (Math.random() - .5) * .04).toFixed(3),
+      sar_db: +(-10.5 + 3.5 * Math.sin(t * Math.PI * 2.5)   + (Math.random() - .5) * .8).toFixed(2),
+    });
+  }
+  return obs;
+})();
+
+let currentObs = OBS[OBS.length - 1];
+
+// ── Canchas Vélez — datos agronómicos por sector ──────────────────────────────
+// Demo data: se reemplaza con fetch a /velez/canchas si el backend responde
+const CANCHAS_DEMO = [
+  { id: 'amalfitani',  nombre: 'Campo Principal · Amalfitani',
+    position: [-58.5290, -34.6360, 0], ndvi: 0.62, score: 74, tipo: 'kikuyu' },
+  { id: 'cancha-1',    nombre: 'Cancha Entrenamiento 1',
+    position: [-58.5303, -34.6370, 0], ndvi: 0.51, score: 57, tipo: 'bermuda' },
+  { id: 'cancha-2',    nombre: 'Cancha Entrenamiento 2',
+    position: [-58.5278, -34.6372, 0], ndvi: 0.44, score: 43, tipo: 'bermuda' },
+  { id: 'cancha-3',    nombre: 'Cancha Entrenamiento 3',
+    position: [-58.5310, -34.6355, 0], ndvi: 0.37, score: 32, tipo: 'ray grass' },
+  { id: 'cancha-4',    nombre: 'Cancha Juveniles A',
+    position: [-58.5268, -34.6355, 0], ndvi: 0.57, score: 65, tipo: 'kikuyu' },
+  { id: 'zona-norte',  nombre: 'Área Norte · Piletas',
+    position: [-58.5295, -34.6344, 0], ndvi: 0.21, score: 22, tipo: 'sintético' },
+];
+
+let canchasData = CANCHAS_DEMO;
+
+// ── MapLibre ──────────────────────────────────────────────────────────────────
+const map = new maplibregl.Map({
+  container: 'map',
+  style: {
+    version: 8,
+    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources: {
+      osm: {
+        type:        'raster',
+        tiles:       ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize:    256,
+        attribution: '© OpenStreetMap',
+      },
+    },
+    layers: [{ id: 'osm', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 22 }],
+  },
+  center:  CFG.CENTER,
+  zoom:    CFG.ZOOM,
+  pitch:   45,
+  bearing: -15,
+});
+
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+
+// ── Capas tile ────────────────────────────────────────────────────────────────
+map.on('load', () => {
+  // NDVI
+  map.addSource('ndvi', {
+    type:     'raster',
+    tiles:    [`${CFG.BACKEND}/tiles/ndvi/{z}/{x}/{y}?venue=velez`],
+    tileSize: 256,
+    attribution: 'Faro Protocol · Sentinel-2 L2A Element84',
+  });
+  map.addLayer({ id: 'ndvi-layer', type: 'raster', source: 'ndvi',
+    paint: { 'raster-opacity': 0.85 } });
+
+  // SAR
+  map.addSource('sar', {
+    type:     'raster',
+    tiles:    [`${CFG.BACKEND}/tiles/sar/{z}/{x}/{y}?venue=velez&opacity=102`],
+    tileSize: 256,
+    attribution: 'Faro Protocol · OPERA RTC-S1 NASA',
+  });
+  map.addLayer({ id: 'sar-layer', type: 'raster', source: 'sar',
+    paint: { 'raster-opacity': 0.40 } });
+
+  // Alerts source (GeoJSON vacío, se rellena desde Supabase)
+  map.addSource('alerts', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  });
+  map.addLayer({
+    id: 'alerts-circles', type: 'circle', source: 'alerts',
+    paint: {
+      'circle-radius':       8,
+      'circle-color':        ['case',
+        ['==', ['get', 'nivel'], 'rojo'],    '#e05050',
+        ['==', ['get', 'nivel'], 'amarillo'],'#e0c040',
+        '#4caf7d',
+      ],
+      'circle-stroke-width': 2,
+      'circle-stroke-color': 'rgba(255,255,255,.4)',
+      'circle-opacity':      0.9,
+    },
+  });
+
+  // Click en alertas
+  map.on('click', 'alerts-circles', (e) => {
+    const feat = e.features[0];
+    const p    = feat.properties;
+    showPopup(p.venue_id || 'Alerta', {
+      'Nivel':        p.nivel || '—',
+      'Motivo':       p.motivo || '—',
+      'NDVI':         p.ndvi != null ? p.ndvi.toFixed(3) : currentObs.ndvi,
+      'BSI':          p.bsi  != null ? p.bsi.toFixed(3)  : currentObs.bsi,
+      'NDWI':         p.ndwi != null ? p.ndwi.toFixed(3) : currentObs.ndwi,
+      'Fecha':        (p.created_at || '').slice(0, 10),
+    }, p.recomendacion || '');
+  });
+
+  // Cursor pointer al pasar por alertas
+  map.on('mouseenter', 'alerts-circles', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+  map.on('mouseleave', 'alerts-circles', () => {
+    map.getCanvas().style.cursor = '';
+  });
+
+  // Click en mapa → popup con datos de la observación actual
+  map.on('click', (e) => {
+    if (map.queryRenderedFeatures(e.point, { layers: ['alerts-circles'] }).length) return;
+    showPopup(
+      `${e.lngLat.lat.toFixed(5)}, ${e.lngLat.lng.toFixed(5)}`,
+      {
+        'NDVI':    currentObs.ndvi,
+        'BSI':     currentObs.bsi,
+        'NDWI':    currentObs.ndwi,
+        'SAR dB':  currentObs.sar_db,
+        'Fecha':   currentObs.date,
+      },
+      getRecomendacion(currentObs.ndvi),
+    );
+  });
+
+  // Cargar alertas desde Supabase
+  loadAlerts();
+  updateStats(currentObs);
+  document.getElementById('bb-info').textContent =
+    `NDVI: ${currentObs.ndvi} · SAR: ${currentObs.sar_db} dB · ${currentObs.date}`;
+
+  // ── deck.gl overlay — técnica Nagix ──────────────────────────────────────
+  initDeckGL();
+});
+
+// ── Slider temporal ────────────────────────────────────────────────────────────
+const slider   = document.getElementById('obs-slider');
+const obsDate  = document.getElementById('obs-date');
+
+slider.addEventListener('input', () => {
+  const idx   = +slider.value;
+  currentObs  = OBS[idx];
+  obsDate.textContent = currentObs.date;
+  updateStats(currentObs);
+  document.getElementById('bb-info').textContent =
+    `NDVI: ${currentObs.ndvi} · SAR: ${currentObs.sar_db} dB · ${currentObs.date}`;
+  // Refrescar tiles con parámetro de fecha (si el backend lo soporta)
+  refreshTiles(currentObs.date);
+});
+
+obsDate.textContent = OBS[75].date;
+
+function updateStats(obs) {
+  document.getElementById('stat-ndvi').textContent = obs.ndvi.toFixed(3);
+  document.getElementById('stat-bsi').textContent  = obs.bsi.toFixed(3);
+  document.getElementById('stat-ndwi').textContent = obs.ndwi.toFixed(3);
+  document.getElementById('stat-sar').textContent  = obs.sar_db.toFixed(1);
+}
+
+function refreshTiles(date) {
+  // Forzar recarga de tiles cambiando la URL con el parámetro de fecha
+  ['ndvi', 'sar'].forEach(layer => {
+    const src = map.getSource(`${layer}`);
+    if (!src) return;
+    const base = `${CFG.BACKEND}/tiles/${layer}/{z}/{x}/{y}?venue=velez`;
+    const url  = layer === 'sar' ? `${base}&opacity=102` : base;
+    src.setTiles([`${url}&_t=${date}`]);
+  });
+}
+
+// ── deck.gl — ScatterplotLayer NDVI + ColumnLayer SAR (técnica Nagix) ────────
+let deckOverlay = null;
+const deckLayerState = { canchas: true, sarColumns: true };
+
+function _ndviToColor(ndvi) {
+  // D3 RdYlGn — igual que Nagix usa para profundidad de sismos
+  // Rango agronómico: -0.1 (pasto muerto) → 0.6 (verde denso)
+  const t = Math.max(0, Math.min(1, (ndvi + 0.1) / 0.7));
+  const hex = d3.interpolateRdYlGn(t);
+  const c   = d3.color(hex);
+  return [Math.round(c.r), Math.round(c.g), Math.round(c.b), 210];
+}
+
+function _scoreToColor(score) {
+  if (score >= 60) return [34,  197, 94,  180];   // verde
+  if (score >= 30) return [234, 179, 8,   190];   // amarillo
+  return              [229, 62,  62,  200];         // rojo
+}
+
+function buildDeckLayers() {
+  const layers = [];
+
+  if (deckLayerState.canchas) {
+    layers.push(new deck.ScatterplotLayer({
+      id:          'canchas-ndvi',
+      data:        canchasData.filter(c => c.ndvi != null),
+      getPosition: d => d.position,
+      getRadius:   30,
+      radiusUnits: 'meters',
+      getFillColor: d => _ndviToColor(d.ndvi),
+      getLineColor: [255, 255, 255, 80],
+      lineWidthMinPixels: 1,
+      stroked:     true,
+      filled:      true,
+      pickable:    true,
+      autoHighlight: true,
+      highlightColor: [255, 215, 80, 255],
+      onClick: ({ object }) => {
+        if (!object) return;
+        const ndviStr   = object.ndvi  != null ? object.ndvi.toFixed(3)  : '—';
+        const scoreStr  = object.score != null ? object.score            : '—';
+        document.getElementById('terminal').innerHTML =
+          `▸ <strong>${object.nombre}</strong> &nbsp;|&nbsp; ` +
+          `NDVI: <strong>${ndviStr}</strong> &nbsp;·&nbsp; ` +
+          `Score: <strong>${scoreStr}</strong> &nbsp;·&nbsp; ` +
+          `Tipo: ${object.tipo ?? 'natural'}`;
+        showPopup(object.nombre, {
+          'NDVI':        ndviStr,
+          'Score':       scoreStr,
+          'Superficie':  object.tipo ?? 'natural',
+          'Fecha datos': currentObs.date,
+        }, getRecomendacion(object.ndvi));
+      },
+    }));
+  }
+
+  if (deckLayerState.sarColumns) {
+    layers.push(new deck.ColumnLayer({
+      id:           'sar-columns',
+      data:         canchasData.filter(c => c.score != null),
+      getPosition:  d => [d.position[0], d.position[1]],
+      getElevation: d => Math.max(5, (100 - d.score) * 3),
+      getFillColor: d => _scoreToColor(d.score),
+      radius:       18,
+      extruded:     true,
+      elevationScale: 1,
+      pickable:     true,
+      autoHighlight: true,
+      highlightColor: [255, 215, 80, 200],
+      onClick: ({ object }) => {
+        if (!object) return;
+        const compactacion = object.score != null
+          ? `${100 - object.score}% compactación`
+          : '—';
+        document.getElementById('terminal').innerHTML =
+          `▸ <strong>${object.nombre}</strong> &nbsp;|&nbsp; ` +
+          `SAR Score: <strong>${object.score ?? '—'}</strong> &nbsp;·&nbsp; ` +
+          `${compactacion}`;
+      },
+    }));
+  }
+
+  return layers;
+}
+
+function updateDeckLayers() {
+  if (deckOverlay) deckOverlay.setProps({ layers: buildDeckLayers() });
+}
+
+function initDeckGL() {
+  if (typeof deck === 'undefined' || !deck.MapboxOverlay) {
+    console.warn('deck.gl no disponible — ScatterplotLayer y ColumnLayer omitidos');
+    return;
+  }
+
+  // Intentar cargar canchas reales desde backend
+  fetch(`${CFG.BACKEND}/velez/canchas`)
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data && Array.isArray(data) && data.length > 0) {
+        canchasData = data.map(d => ({
+          id:       d.id       ?? d.cancha_id,
+          nombre:   d.nombre   ?? d.id,
+          position: [+d.lng, +d.lat, 0],
+          ndvi:     d.ndvi     != null ? +d.ndvi  : null,
+          score:    d.score    != null ? +d.score  : null,
+          tipo:     d.tipo_superficie ?? 'natural',
+        }));
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      deckOverlay = new deck.MapboxOverlay({
+        interleaved: false,
+        layers: buildDeckLayers(),
+      });
+      map.addControl(deckOverlay);
+    });
+}
+
+// ── Toggle capas ──────────────────────────────────────────────────────────────
+const layerState = { ndvi: true, sar: true, alerts: true, canchas: true, sarColumns: true };
+
+function toggleLayer(id) {
+  layerState[id] = !layerState[id];
+  const btn = document.getElementById(`toggle-${id}`);
+  if (btn) btn.classList.toggle('on', layerState[id]);
+
+  // capas MapLibre nativas
+  const mapboxLayers = { ndvi: 'ndvi-layer', sar: 'sar-layer', alerts: 'alerts-circles' };
+  if (mapboxLayers[id] && map.getLayer(mapboxLayers[id])) {
+    map.setLayoutProperty(mapboxLayers[id], 'visibility', layerState[id] ? 'visible' : 'none');
+  }
+
+  // capas deck.gl
+  if (id === 'canchas' || id === 'sarColumns') {
+    deckLayerState[id] = layerState[id];
+    updateDeckLayers();
+  }
+}
+
+// ── Vista 2D / 3D ─────────────────────────────────────────────────────────────
+function setView(mode) {
+  document.getElementById('btn-2d').classList.toggle('active', mode === '2d');
+  document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
+  map.easeTo({
+    pitch:    mode === '3d' ? 55 : 0,
+    bearing:  mode === '3d' ? -20 : 0,
+    duration: 600,
+  });
+}
+
+// ── Popup ─────────────────────────────────────────────────────────────────────
+function showPopup(title, rows, rec) {
+  document.getElementById('pp-title').textContent = title;
+  const rowsEl = document.getElementById('pp-rows');
+  rowsEl.innerHTML = '';
+  for (const [k, v] of Object.entries(rows)) {
+    rowsEl.innerHTML += `
+      <div class="pp-row">
+        <span class="pp-key">${k}</span>
+        <span class="pp-val">${v}</span>
+      </div>`;
+  }
+  document.getElementById('pp-rec').textContent = rec || '';
+  document.getElementById('map-popup').classList.add('visible');
+}
+
+function closePopup() {
+  document.getElementById('map-popup').classList.remove('visible');
+}
+
+// ── Recomendación Paperclip ───────────────────────────────────────────────────
+function getRecomendacion(ndvi) {
+  if (ndvi >= 0.65) return 'Vegetación densa y saludable. Sin intervención necesaria.';
+  if (ndvi >= 0.45) return 'Cobertura moderada. Monitoreo preventivo recomendado.';
+  if (ndvi >= 0.25) return 'Estrés vegetal detectado. Revisar riego y nutrición.';
+  return 'Cobertura muy baja. Intervención urgente recomendada.';
+}
+
+// ── Alertas Supabase ──────────────────────────────────────────────────────────
+async function loadAlerts() {
+  if (!CFG.SUPABASE_URL || !CFG.SUPABASE_KEY) {
+    renderAlertsFallback();
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `${CFG.SUPABASE_URL}/rest/v1/paperclip_decisions?select=venue_id,alertar,nivel,motivo,created_at,lat,lon,ndvi,bsi,ndwi,recomendacion&order=created_at.desc&limit=20`,
+      { headers: {
+          'apikey':        CFG.SUPABASE_KEY,
+          'Authorization': `Bearer ${CFG.SUPABASE_KEY}`,
+        }
+      }
+    );
+    if (!res.ok) throw new Error(`Supabase ${res.status}`);
+    const rows = await res.json();
+    renderAlerts(rows);
+  } catch (err) {
+    console.warn('Alertas Supabase:', err);
+    renderAlertsFallback();
+  }
+}
+
+function renderAlerts(rows) {
+  const listEl = document.getElementById('alerts-list');
+  listEl.innerHTML = '';
+
+  const features = [];
+  rows.forEach(r => {
+    // Lista
+    const div = document.createElement('div');
+    div.className = 'alert-item';
+    div.innerHTML = `
+      <div class="alert-dot ${r.nivel || 'verde'}"></div>
+      <div class="alert-text">${r.motivo || r.venue_id || '—'}</div>
+      <div class="alert-date">${(r.created_at || '').slice(0, 10)}</div>`;
+    div.onclick = () => {
+      if (r.lat && r.lon) map.flyTo({ center: [r.lon, r.lat], zoom: 16 });
+      showPopup(r.venue_id || 'Alerta', {
+        'Nivel':  r.nivel || '—',
+        'Motivo': r.motivo || '—',
+        'NDVI':   r.ndvi?.toFixed(3) || '—',
+        'BSI':    r.bsi?.toFixed(3)  || '—',
+        'NDWI':   r.ndwi?.toFixed(3) || '—',
+        'Fecha':  (r.created_at || '').slice(0, 10),
+      }, r.recomendacion || '');
+    };
+    listEl.appendChild(div);
+
+    // GeoJSON para el mapa
+    if (r.lat && r.lon) {
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
+        properties: { ...r },
+      });
+    }
+  });
+
+  const src = map.getSource('alerts');
+  if (src) src.setData({ type: 'FeatureCollection', features });
+}
+
+function renderAlertsFallback() {
+  // Demo data cuando Supabase no está configurado
+  const demo = [
+    { nivel: 'verde',   motivo: 'NDVI normal · campo principal', created_at: '2026-06-01' },
+    { nivel: 'amarillo',motivo: 'Humedad baja · sector oeste',   created_at: '2026-05-28' },
+    { nivel: 'verde',   motivo: 'Sin anomalías · piletas',       created_at: '2026-05-25' },
+  ];
+  renderAlerts(demo);
+
+  // Points demo en el campo de Vélez
+  const demoFeatures = [
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [-58.5290, -34.6360] },
+      properties: { nivel: 'verde',    motivo: 'NDVI normal',     ndvi: 0.61, bsi: 0.08, ndwi: 0.12 } },
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [-58.5280, -34.6355] },
+      properties: { nivel: 'amarillo', motivo: 'Humedad baja',    ndvi: 0.42, bsi: 0.14, ndwi: -0.03 } },
+  ];
+  if (map.getSource('alerts')) {
+    map.getSource('alerts').setData({ type: 'FeatureCollection', features: demoFeatures });
+  }
+}
+</script>
+</body>
+</html>
