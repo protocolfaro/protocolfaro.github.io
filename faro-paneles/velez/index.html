@@ -1861,10 +1861,10 @@ function buildHeatmapSection(u, cfg, shadowMaps){
       : (_estRaw==='compactacion'||_estRaw==='fungosis'||_estRaw==='INDETERMINADO')
         ? {text:'ALERTA',  color:'#ffaa00'}
         : {text:'NORMAL',  color:'#44aa44'};
-    var _badgeHtml = '<div style="position:absolute;top:8px;right:8px;background:'+_badge.color
-      +';color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:.06em;pointer-events:none">'
+    var _badgeHtml = '<div style="position:absolute;top:8px;right:8px;z-index:10;background:'+_badge.color
+      +';color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:.06em;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.5)">'
       +_badge.text+'</div>';
-    _wrap.innerHTML = imgHtml + _svgHtml + _badgeHtml;
+    _wrap.innerHTML = '<div style="position:relative;width:100%">'+imgHtml+_svgHtml+_badgeHtml+'</div>';
     var shadowInlineHtml='';
     if(curSec==='vo'&&shadowMaps&&shadowMaps[curSub]){
       var smI=shadowMaps[curSub];
