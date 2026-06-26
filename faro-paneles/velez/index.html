@@ -486,24 +486,19 @@ body{background:var(--bg);color:var(--whi);font-family:-apple-system,BlinkMacSys
 .cron-upload-lbl{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
 .cron-footer{padding:8px 12px;display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-top:1px solid rgba(255,255,255,.06)}
 .cron-note{font-size:9px;color:var(--wdim);margin-top:6px;line-height:1.5}
-/* ── Faro 3D Satelital ──────────────────────────────────────────────────── */
+/* ── Panel Roger ─────────────────────────────────────────────────────────── */
 #f3d-section{display:none}
-#f3d-map{width:100%;height:320px;border-radius:8px;overflow:hidden;border:1px solid rgba(201,168,76,.2);margin-top:6px}
-.f3d-bar{display:flex;align-items:center;gap:6px;padding:6px 0;flex-wrap:wrap}
-.f3d-btn{padding:4px 12px;border-radius:14px;border:1px solid var(--gold);background:transparent;color:var(--gold);font-size:11px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.f3d-btn.active{background:var(--gold);color:#0d1117}
-.f3d-select{background:var(--bg2);color:var(--whi);border:1px solid rgba(201,168,76,.3);border-radius:6px;font-size:11px;padding:3px 6px}
-.f3d-slider-wrap{display:flex;align-items:center;gap:8px;padding:6px 0}
-.f3d-slider-wrap input[type=range]{flex:1;accent-color:var(--gold)}
-.f3d-slider-label{font-size:11px;color:var(--wdim);min-width:72px}
-.f3d-cut-card{background:var(--bg2);border-radius:8px;padding:10px 14px;margin-top:6px;border:1px solid rgba(201,168,76,.15)}
-.f3d-cut-status{font-size:13px;font-weight:700}
-.f3d-cut-status.optima{color:var(--grn)}
-.f3d-cut-status.restringida{color:var(--yel)}
-.f3d-cut-status.bloqueo{color:var(--red)}
-.f3d-cut-detail{font-size:11px;color:var(--wdim);margin-top:3px;line-height:1.5}
-.f3d-photo-btn{display:block;width:100%;margin-top:8px;padding:9px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:8px;color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
-.f3d-photo-result{font-size:11px;padding:6px 0;line-height:1.5}
+.rg-detail-card{background:var(--bg2);border-radius:8px;padding:12px 14px;border:1px solid rgba(201,168,76,.2);margin-top:10px}
+.rg-detail-hdr{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.rg-detail-name{flex:1;font-size:15px;font-weight:700;color:var(--whi)}
+.rg-detail-close{background:none;border:none;color:var(--wdim);font-size:16px;cursor:pointer;padding:2px 4px;line-height:1;-webkit-tap-highlight-color:transparent}
+.rg-detail-close:active{color:var(--red)}
+.rg-chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.rg-chip{flex:1;min-width:80px;background:var(--bg3);border-radius:6px;padding:7px 10px;border:1px solid rgba(255,255,255,.06)}
+.rg-chip-active{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.07)}
+.rg-chip-label{display:block;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--wdim);margin-bottom:3px}
+.rg-chip-val{display:block;font-size:14px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.rg-detail-text{font-size:11px;color:var(--wdim);line-height:1.6;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.05)}
 /* ── Panel Roger Canonical (#roger / #f3d-section) ───────────────────────── */
 #rg-header{padding:6px 16px 10px}
 #rg-score-bar{display:flex;align-items:baseline;gap:6px;margin:6px 0}
@@ -531,6 +526,11 @@ body{background:var(--bg);color:var(--whi);font-family:-apple-system,BlinkMacSys
 .rg-ok{color:var(--grn)}
 .rg-warn{color:var(--yel)}
 .rg-crit{color:var(--red)}
+@media (max-width:768px){
+  .rg-lbtn{padding:10px 16px;font-size:12px}
+  .rg-depth-btn{padding:8px 12px;font-size:11px}
+  .mc-tab{padding:10px 16px;font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -671,7 +671,7 @@ body{background:var(--bg);color:var(--whi);font-family:-apple-system,BlinkMacSys
 
   <!-- Panel Roger Canonical — canchero/roger only -->
   <div id="f3d-section">
-    <!-- Sección 1: Cabezal fijo -->
+    <!-- Cabezal -->
     <div id="rg-header">
       <div class="section-title">Panel Cancha · Amalfitani
         <span id="f3d-live" style="width:6px;height:6px;background:var(--grn);border-radius:50%;display:inline-block;box-shadow:0 0 5px var(--grn);animation:pulse 2s infinite;margin-left:6px;vertical-align:middle"></span>
@@ -682,7 +682,7 @@ body{background:var(--bg);color:var(--whi);font-family:-apple-system,BlinkMacSys
       <div id="rg-score-source"></div>
       <div id="rg-freshness-banner"></div>
     </div>
-    <!-- Sección 2: Mapa cenital 2D -->
+    <!-- Layer buttons + overview SVG + detail card -->
     <div style="padding:0 16px">
       <div class="rg-layer-bar">
         <button class="rg-lbtn active" data-layer="ndvi" onclick="rgSetLayer('ndvi')">NDVI</button>
@@ -694,9 +694,10 @@ body{background:var(--bg);color:var(--whi);font-family:-apple-system,BlinkMacSys
         <button class="rg-depth-btn" data-depth="10" onclick="rgSetHumDepth('10')">10cm</button>
         <button class="rg-depth-btn" data-depth="20" onclick="rgSetHumDepth('20')">20cm</button>
       </div>
-      <div id="f3d-map"></div>
+      <svg id="rg-overview-svg" viewBox="0 0 214 194" style="width:100%;display:block;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:var(--bg2)"></svg>
+      <div id="rg-detail"></div>
     </div>
-    <!-- Sección 3: Prescripción -->
+    <!-- Prescripción -->
     <div id="rg-presc">
       <div id="rg-semaforo"></div>
       <div id="rg-ordenes"></div>
@@ -3055,80 +3056,265 @@ init();
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════════
-   PANEL ROGER CANONICAL — MapLibre GL + faro_assembler
+   PANEL ROGER CANONICAL — SVG overview + faro_assembler
    Fuente única: GET /velez/panel-roger-canonical
-   Mapa:         GET /velez/amalfitani-geojson (GeoJSON fill layers)
-   Regla:        sin fetches directos a Supabase desde este módulo.
+   Sin MapLibre. Sin fetches directos a Supabase.
    ════════════════════════════════════════════════════════════════════════════ */
 (function(){
 'use strict';
 
 var FARO_BACKEND = 'https://faroprotocol-production-45fd.up.railway.app';
-var CENTER  = [-58.5034, -34.6344];
 
-var _map        = null;
-var _mapReady   = false;
-var _mlLoaded   = false;
-var _activeLayer = 'ndvi';
-var _humDepth    = '5';
+var _canonicalData = null;
+var _activeLayer   = 'ndvi';
+var _humDepth      = '5';
+var _activeCid     = null;
 
-/* ── Lazy-load MapLibre GL JS ────────────────────────────────────────────── */
-function _loadML(cb){
-  if(_mlLoaded){ cb(); return; }
-  var lnk = document.createElement('link');
-  lnk.rel = 'stylesheet';
-  lnk.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
-  document.head.appendChild(lnk);
-  var scr = document.createElement('script');
-  scr.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
-  scr.onload = function(){ _mlLoaded = true; cb(); };
-  document.head.appendChild(scr);
+/* ── Cancha order / grid layout ─────────────────────────────────────────── */
+var _CANCHA_ORDER = ['1fa','2fa','3fa','4fa','5fa','6fa','7fa','8fa','9fa','10fa','1fp','2fp'];
+var _OV_COLS = [3, 111];
+var _OV_ROWS = [3, 35, 67, 99, 131, 163];
+var _OV_CW   = 100;
+var _OV_CH   = 28;
+
+/* ── Color stops ────────────────────────────────────────────────────────── */
+var _NDVI_STOPS = [
+  [-0.1,[215,48,39]], [0.05,[252,141,89]], [0.2,[254,224,144]],
+  [0.35,[217,239,139]], [0.5,[145,207,96]], [0.65,[26,150,65]]
+];
+var _SAR_STOPS = [
+  [0.0,[229,62,62]], [0.3,[229,62,62]], [0.45,[237,137,54]],
+  [0.6,[236,201,75]], [0.75,[104,211,145]], [1.0,[104,211,145]]
+];
+var _HUM_STOPS = [
+  [0.0,[247,251,255]], [0.08,[198,219,239]], [0.15,[158,202,225]],
+  [0.22,[49,130,189]], [0.35,[8,48,107]]
+];
+
+function _lerpColor(stops, val){
+  if(val == null || isNaN(val)) return null;
+  if(val <= stops[0][0]) return stops[0][1];
+  if(val >= stops[stops.length-1][0]) return stops[stops.length-1][1];
+  for(var i = 0; i < stops.length - 1; i++){
+    if(val >= stops[i][0] && val <= stops[i+1][0]){
+      var t = (val - stops[i][0]) / (stops[i+1][0] - stops[i][0]);
+      var a = stops[i][1], b = stops[i+1][1];
+      return [Math.round(a[0]+t*(b[0]-a[0])), Math.round(a[1]+t*(b[1]-a[1])), Math.round(a[2]+t*(b[2]-a[2]))];
+    }
+  }
+  return stops[stops.length-1][1];
 }
 
-/* ── Entry point — called from render() when tipo === 'canchero' ─────────── */
+function _rgbStr(stops, val){
+  var rgb = _lerpColor(stops, val != null ? parseFloat(val) : null);
+  return rgb ? 'rgb('+rgb[0]+','+rgb[1]+','+rgb[2]+')' : null;
+}
+
+function _metricInfo(c, layer, depth){
+  if(layer === 'ndvi')  return { val: c.ndvi,      stops: _NDVI_STOPS, fmt: 2 };
+  if(layer === 'sar')   return { val: c.entropia_h, stops: _SAR_STOPS,  fmt: 2 };
+  return { val: c['theta_'+depth+'cm'], stops: _HUM_STOPS, fmt: 3 };
+}
+
+function _metricColor(c, layer, depth){
+  var m = _metricInfo(c, layer, depth);
+  return _rgbStr(m.stops, m.val) || '#2a2a2a';
+}
+
+function _metricVal(c, layer, depth){
+  var m = _metricInfo(c, layer, depth);
+  return m.val != null ? parseFloat(m.val).toFixed(m.fmt) : null;
+}
+
+function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+
+function _shortName(c){
+  if(!c.nombre) return c.id || '—';
+  return c.nombre.length <= 12 ? c.nombre : c.nombre.slice(0,11)+'…';
+}
+
+function _getCanchas(){
+  if(!_canonicalData) return [];
+  return ((_canonicalData.sectores||{}).canchero||{}).canchas||[];
+}
+
+function _getCanchaById(cid){
+  return _getCanchas().find(function(c){ return c.id === cid; })||null;
+}
+
+var _SEM_EMOJI = { verde:'🟢', amarillo:'🟡', rojo:'🔴' };
+var _SEM_LABEL = { verde:'Óptimo', amarillo:'Atención', rojo:'Crítico' };
+
+function _scoreBar(score){
+  if(score == null) return '░░░░░░░░░░░░░░░░';
+  var filled = Math.round(Math.max(0, Math.min(100, score)) / 100 * 16);
+  return '█'.repeat(filled) + '░'.repeat(16 - filled);
+}
+
+/* ── Overview SVG — colored by semáforo ─────────────────────────────────── */
+function _renderOverview(){
+  var svg = document.getElementById('rg-overview-svg');
+  if(!svg) return;
+  var canchas = _getCanchas();
+  var byId = {};
+  canchas.forEach(function(c){ if(c.id) byId[c.id]=c; });
+  var parts = [];
+  _CANCHA_ORDER.forEach(function(cid, idx){
+    var row = Math.floor(idx/2), col = idx%2;
+    var x = _OV_COLS[col], y = _OV_ROWS[row];
+    var c = byId[cid]||{id:cid};
+    var fill = _SEM_HEX[c.sem] ? _SEM_HEX[c.sem]+'33' : '#2a2a2a';
+    var border = _SEM_HEX[c.sem] || 'rgba(255,255,255,.08)';
+    var disp = _metricVal(c, _activeLayer, _humDepth);
+    var sel  = cid === _activeCid;
+    parts.push(
+      '<g onclick="rgFocusCancha(\''+_esc(cid)+'\')" style="cursor:pointer">',
+      '<rect x="'+x+'" y="'+y+'" width="'+_OV_CW+'" height="'+_OV_CH+'" rx="3"',
+      ' fill="'+fill+'" stroke="'+(sel?'#c9a84c':border)+'"',
+      ' stroke-width="'+(sel?'1.5':'0.8')+'"/>',
+      '<text x="'+(x+5)+'" y="'+(y+11)+'" font-size="8" fill="rgba(255,255,255,.85)"',
+      ' font-family="sans-serif" font-weight="600">'+_esc(_shortName(c))+'</text>',
+      '<text x="'+(x+5)+'" y="'+(y+22)+'" font-size="9" fill="rgba(255,255,255,.55)"',
+      ' font-family="monospace">'+(disp!=null?_esc(disp):'Sin dato')+'</text>',
+      '</g>'
+    );
+  });
+  svg.innerHTML = parts.join('');
+}
+
+/* ── Detail card ─────────────────────────────────────────────────────────── */
+var _SEM_HEX = { verde:'#4cad72', amarillo:'#c9a84c', rojo:'#E53E3E' };
+
+function _renderDetail(c){
+  var el = document.getElementById('rg-detail');
+  if(!el) return;
+  if(!c){ el.innerHTML=''; return; }
+
+  var score    = c.score != null ? parseInt(c.score, 10) : null;
+  var semEmoji = _SEM_EMOJI[c.sem] || '';
+  var semLabel = _SEM_LABEL[c.sem] || 'Sin dato';
+  var bar      = _scoreBar(score);
+
+  var ndviV = c.ndvi_2_5m!=null ? parseFloat(c.ndvi_2_5m).toFixed(3)
+            : c.ndvi!=null ? parseFloat(c.ndvi).toFixed(3) : null;
+  var sarV  = c.entropia_h!=null ? parseFloat(c.entropia_h).toFixed(3) : null;
+  var humF  = 'theta_'+_humDepth+'cm';
+  var humV  = c[humF]!=null ? parseFloat(c[humF]).toFixed(3) : null;
+
+  var activeInline = _metricVal(c, _activeLayer, _humDepth);
+  var activeLabel  = _activeLayer==='ndvi' ? 'NDVI' : _activeLayer==='sar' ? 'SAR H' : 'θ '+_humDepth+'cm';
+
+  var nd  = function(v){ return v!=null ? v : 'Sin dato'; };
+  var cc  = function(layer){ return 'rg-chip'+(_activeLayer===layer?' rg-chip-active':''); };
+  var clr = function(v, stops){
+    var c = v!=null ? _rgbStr(stops, parseFloat(v)) : null;
+    return c ? 'color:'+c : 'color:var(--wdim)';
+  };
+
+  el.innerHTML =
+    '<div class="rg-detail-card">'+
+      '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px">'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'+
+            '<span style="font-size:13px;font-weight:700;color:var(--whi)">'+_esc(c.nombre||c.id||'—')+'</span>'+
+            '<span style="font-family:monospace;font-size:10px;color:'+(c.sem?_SEM_HEX[c.sem]:'var(--wdim)')+';letter-spacing:-.02em;flex:1;overflow:hidden;white-space:nowrap">'+_esc(bar)+'</span>'+
+            '<span style="font-size:10px;color:var(--wdim);white-space:nowrap;flex-shrink:0">'+_esc(activeLabel+' '+(activeInline||'—'))+'</span>'+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--wdim)">'+
+            'Score '+(score!=null?score:'—')+' · '+semEmoji+' '+_esc(semLabel)+
+          '</div>'+
+        '</div>'+
+        '<button class="rg-detail-close" onclick="rgCloseDetail()" style="flex-shrink:0;margin-top:-2px">✕</button>'+
+      '</div>'+
+      '<div class="rg-chips">'+
+        '<div class="'+cc('ndvi')+'">'+
+          '<span class="rg-chip-label">NDVI</span>'+
+          '<span class="rg-chip-val" style="'+clr(ndviV,_NDVI_STOPS)+'">'+_esc(nd(ndviV))+'</span>'+
+        '</div>'+
+        '<div class="'+cc('sar')+'">'+
+          '<span class="rg-chip-label">SAR H·α</span>'+
+          '<span class="rg-chip-val" style="'+clr(sarV,_SAR_STOPS)+'">'+_esc(nd(sarV))+'</span>'+
+        '</div>'+
+        '<div class="'+cc('hum')+'">'+
+          '<span class="rg-chip-label">θ '+_humDepth+'cm</span>'+
+          '<span class="rg-chip-val" style="'+clr(humV,_HUM_STOPS)+'">'+_esc(nd(humV))+'</span>'+
+        '</div>'+
+      '</div>'+
+      (c.detalle?'<div class="rg-detail-text">'+_esc(c.detalle)+'</div>':'')+
+    '</div>';
+}
+
+/* ── Public controls ─────────────────────────────────────────────────────── */
+window.rgSetLayer = function(layer){
+  _activeLayer = layer;
+  document.querySelectorAll('.rg-lbtn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.querySelector('.rg-lbtn[data-layer="'+layer+'"]');
+  if(btn) btn.classList.add('active');
+  var humSlider = document.getElementById('rg-hum-slider');
+  if(humSlider) humSlider.style.display = layer==='hum'?'flex':'none';
+  _renderOverview();
+  if(_activeCid) _renderDetail(_getCanchaById(_activeCid));
+};
+
+window.rgSetHumDepth = function(depth){
+  _humDepth = depth;
+  document.querySelectorAll('.rg-depth-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.depth===depth);
+  });
+  _renderOverview();
+  if(_activeCid) _renderDetail(_getCanchaById(_activeCid));
+};
+
+window.rgFocusCancha = function(cid){
+  _activeCid = cid||null;
+  _renderOverview();
+  _renderDetail(cid ? _getCanchaById(cid) : null);
+};
+
+window.rgCloseDetail = function(){
+  _activeCid = null;
+  _renderOverview();
+  var el = document.getElementById('rg-detail');
+  if(el) el.innerHTML='';
+};
+
+/* ── Entry point ─────────────────────────────────────────────────────────── */
 function buildFaro3D(){
   var sec = document.getElementById('f3d-section');
-  if(sec) sec.style.display = 'block';
+  if(sec) sec.style.display='block';
   _fetchCanonical();
 }
 
-/* ── Fetch canonical report from assembler ───────────────────────────────── */
 function _fetchCanonical(){
-  fetch(FARO_BACKEND + '/velez/panel-roger-canonical')
+  fetch(FARO_BACKEND+'/velez/panel-roger-canonical')
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(data){
+      _canonicalData = data;
       _renderHeader(data);
-      _initMap(data);
+      _renderOverview();
       _renderPrescripcion(data);
     })
     .catch(function(e){
-      console.warn('panel-roger-canonical:', e);
+      console.warn('panel-roger-canonical:',e);
       var el = document.getElementById('rg-ordenes');
-      if(el) el.innerHTML = '<div class="rg-block"><div class="rg-terminal"><span class="rg-warn">Sin conexión con servidor Faro.</span></div></div>';
+      if(el) el.innerHTML='<div class="rg-block"><div class="rg-terminal"><span class="rg-warn">Sin conexión con servidor Faro.</span></div></div>';
     });
 }
 
-/* ── Sección 1: Cabezal ──────────────────────────────────────────────────── */
+/* ── Header ──────────────────────────────────────────────────────────────── */
 function _renderHeader(data){
   var hermes   = data.hermes   || {};
   var sectores = data.sectores || {};
+  var meta     = data.meta     || {};
   var wl       = data.weather_live || {};
-  var meta     = data.meta || {};
-
-  // Score global: sector canchero score (0-100) desde assembler
-  var cancheroScore = (sectores.canchero && sectores.canchero.score != null)
-    ? sectores.canchero.score : null;
+  var score = (sectores.canchero && sectores.canchero.score != null) ? sectores.canchero.score : null;
   var numEl = document.getElementById('rg-score-num');
-  if(numEl) numEl.textContent = cancheroScore != null ? cancheroScore : 'Sin dato';
-
-  // Fuentes activas Hermes
+  if(numEl) numEl.textContent = score != null ? score : 'Sin dato';
   var srcEl = document.getElementById('rg-score-source');
   var fuentes = hermes.fuentes_activas || [];
-  if(srcEl) srcEl.textContent = fuentes.length
-    ? 'Hermes · ' + fuentes.join(' + ')
+  if(srcEl) srcEl.textContent = fuentes.length ? 'Hermes · '+fuentes.join(' + ')
     : (hermes.humedad_estimada != null ? 'Hermes · humedad estimada' : '');
-
-  // Banner de frescura satelital
   _renderFreshnessBanner(meta, wl);
 }
 
@@ -3136,159 +3322,16 @@ function _renderFreshnessBanner(meta, wl){
   var banner = document.getElementById('rg-freshness-banner');
   if(!banner) return;
   var fechaSat = meta.fecha_satelite || meta.fecha || null;
-  if(!fechaSat){ banner.innerHTML = ''; return; }
+  if(!fechaSat){ banner.innerHTML=''; return; }
   var daysDiff = (Date.now() - new Date(fechaSat).getTime()) / 86400000;
   if(daysDiff > 7){
-    banner.innerHTML = '<div style="background:#1a1a1a;border-left:4px solid #c9a84c;padding:12px;margin:8px 0;font-size:12px;border-radius:0 6px 6px 0">' +
-      '☁️ Datos ópticos en persistencia — Pasada ' + fechaSat + ' bloqueada por nubosidad. SAR Sentinel-1 activo HOY.</div>';
+    banner.innerHTML='<div style="background:#1a1a1a;border-left:4px solid #c9a84c;padding:12px;margin:8px 0;font-size:12px;border-radius:0 6px 6px 0">☁️ Datos ópticos en persistencia — Pasada '+fechaSat+' bloqueada por nubosidad. SAR Sentinel-1 activo HOY.</div>';
   } else {
-    banner.innerHTML = '<div style="background:#0a1a0a;border-left:4px solid #4cad72;padding:12px;margin:8px 0;font-size:12px;border-radius:0 6px 6px 0">' +
-      '✓ Datos frescos — ' + fechaSat + ' · Sentinel-2 + SAR activos.</div>';
+    banner.innerHTML='<div style="background:#0a1a0a;border-left:4px solid #4cad72;padding:12px;margin:8px 0;font-size:12px;border-radius:0 6px 6px 0">✓ Datos frescos — '+fechaSat+' · Sentinel-2 + SAR activos.</div>';
   }
 }
 
-/* ── Sección 2: Mapa cenital 2D ──────────────────────────────────────────── */
-function _initMap(canonicalData){
-  if(_map){ _loadGeoJSON(canonicalData); return; }
-  _loadML(function(){
-    var container = document.getElementById('f3d-map');
-    if(!container) return;
-    _map = new maplibregl.Map({
-      container: 'f3d-map',
-      style:{
-        version:8,
-        glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-        sources:{ osm:{ type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                        tileSize:256, maxzoom:19, attribution:'© OpenStreetMap' } },
-        layers:[{ id:'osm', type:'raster', source:'osm' }]
-      },
-      center: CENTER, zoom: 17, pitch: 0, bearing: 0,
-    });
-    _map.addControl(new maplibregl.NavigationControl({ visualizePitch:false }), 'bottom-right');
-    _map.on('load', function(){
-      _mapReady = true;
-      _loadGeoJSON(canonicalData);
-    });
-  });
-}
-
-function _loadGeoJSON(canonicalData){
-  fetch(FARO_BACKEND + '/velez/amalfitani-geojson')
-    .then(function(r){ return r.json(); })
-    .then(function(geojson){
-      if(_map.getSource('canchas')) {
-        _map.getSource('canchas').setData(geojson);
-        return;
-      }
-      _map.addSource('canchas', { type:'geojson', data: geojson });
-      _addNdviLayer();
-      _addSarLayer();
-      _addHumLayer();
-      _addOutlineLayer();
-      _addPopups();
-      _setActiveLayer('ndvi');
-    })
-    .catch(function(e){ console.warn('amalfitani-geojson:', e); });
-}
-
-var _RDYLGN = ['interpolate',['linear'],['get','ndvi'],
-  -0.1,'#d73027', 0.05,'#fc8d59', 0.2,'#fee090',
-   0.35,'#d9ef8b', 0.5,'#91cf60', 0.65,'#1a9641'];
-
-function _addNdviLayer(){
-  _map.addLayer({ id:'ndvi-fill', type:'fill', source:'canchas',
-    paint:{ 'fill-color':['case',['!=',['get','ndvi'],null], _RDYLGN, '#2a2a2a'],
-            'fill-opacity':0.8 } });
-}
-function _addSarLayer(){
-  var sarColor = ['interpolate',['linear'],['get','entropia_h'],
-    0.0,'#e53e3e', 0.3,'#e53e3e', 0.45,'#ed8936', 0.6,'#ecc94b', 0.75,'#68d391', 1.0,'#68d391'];
-  _map.addLayer({ id:'sar-fill', type:'fill', source:'canchas', layout:{'visibility':'none'},
-    paint:{ 'fill-color':['case',['!=',['get','entropia_h'],null], sarColor, '#2a2a2a'],
-            'fill-opacity':0.8 } });
-}
-function _addHumLayer(){
-  var humColor = ['interpolate',['linear'],['get','theta_5cm'],
-    0.0,'#f7fbff', 0.08,'#c6dbef', 0.15,'#9ecae1', 0.22,'#3182bd', 0.35,'#08306b'];
-  _map.addLayer({ id:'hum-fill', type:'fill', source:'canchas', layout:{'visibility':'none'},
-    paint:{ 'fill-color':['case',['!=',['get','theta_5cm'],null], humColor, '#2a2a2a'],
-            'fill-opacity':0.8 } });
-}
-function _addOutlineLayer(){
-  _map.addLayer({ id:'canchas-outline', type:'line', source:'canchas',
-    paint:{ 'line-color':'rgba(201,168,76,0.5)', 'line-width':1 } });
-}
-
-function _addPopups(){
-  ['ndvi-fill','sar-fill','hum-fill'].forEach(function(lid){
-    _map.on('click', lid, function(e){
-      var p = e.features[0].properties;
-      var fmt = function(v){ return (v != null && v !== 'null') ? parseFloat(v).toFixed(3) : 'Sin dato'; };
-      new maplibregl.Popup({ closeButton:false, maxWidth:'220px' })
-        .setLngLat(e.lngLat)
-        .setHTML(
-          '<div style="color:#111;font-size:12px;line-height:1.7">' +
-          '<b>' + (p.nombre || p.id || '—') + '</b><br>' +
-          'NDVI: ' + fmt(p.ndvi) + '<br>' +
-          'SAR H: ' + fmt(p.entropia_h) + '<br>' +
-          'θ 5cm / 10cm / 20cm: ' + fmt(p.theta_5cm) + ' / ' + fmt(p.theta_10cm) + ' / ' + fmt(p.theta_20cm) +
-          '</div>'
-        ).addTo(_map);
-    });
-    _map.on('mouseenter', lid, function(){ _map.getCanvas().style.cursor = 'pointer'; });
-    _map.on('mouseleave', lid, function(){ _map.getCanvas().style.cursor = ''; });
-  });
-}
-
-window.rgSetLayer = function(layer){
-  _activeLayer = layer;
-  document.querySelectorAll('.rg-lbtn').forEach(function(b){ b.classList.remove('active'); });
-  var btn = document.querySelector('.rg-lbtn[data-layer="' + layer + '"]');
-  if(btn) btn.classList.add('active');
-  var humSlider = document.getElementById('rg-hum-slider');
-  if(humSlider) humSlider.style.display = layer === 'hum' ? 'flex' : 'none';
-  _setActiveLayer(layer);
-};
-
-function _setActiveLayer(layer){
-  if(!_map || !_mapReady) return;
-  var layerMap = { ndvi:'ndvi-fill', sar:'sar-fill', hum:'hum-fill' };
-  Object.values(layerMap).forEach(function(lid){
-    if(_map.getLayer(lid)) _map.setLayoutProperty(lid,'visibility','none');
-  });
-  if(layerMap[layer] && _map.getLayer(layerMap[layer]))
-    _map.setLayoutProperty(layerMap[layer],'visibility','visible');
-}
-
-window.rgSetHumDepth = function(depth){
-  _humDepth = depth;
-  document.querySelectorAll('.rg-depth-btn').forEach(function(b){
-    b.classList.toggle('active', b.dataset.depth === depth);
-  });
-  if(!_map || !_map.getLayer('hum-fill')) return;
-  var field = 'theta_' + depth + 'cm';
-  _map.setPaintProperty('hum-fill','fill-color',['case',
-    ['!=',['get',field],null],
-    ['interpolate',['linear'],['get',field],
-      0.0,'#f7fbff', 0.08,'#c6dbef', 0.15,'#9ecae1', 0.22,'#3182bd', 0.35,'#08306b'],
-    '#2a2a2a']);
-};
-
-window.rgFocusCancha = function(cid){
-  if(!_map || !cid) return;
-  var source = _map.getSource('canchas');
-  if(!source || !source._data) return;
-  var feat = (source._data.features || []).find(function(f){ return f.properties.id === cid; });
-  if(!feat) return;
-  var geom = feat.geometry;
-  if(geom.type === 'Point'){
-    _map.flyTo({ center: geom.coordinates, zoom: 18, duration: 600 });
-  } else if(geom.type === 'Polygon'){
-    _map.flyTo({ center: geom.coordinates[0][0], zoom: 18, duration: 600 });
-  }
-};
-
-/* ── Sección 3: Prescripción ─────────────────────────────────────────────── */
+/* ── Prescripción ─────────────────────────────────────────────────────────── */
 function _renderPrescripcion(data){
   _renderSemaforo(data);
   _renderOrdenes(data);
