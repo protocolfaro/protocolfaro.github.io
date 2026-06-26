@@ -1854,7 +1854,17 @@ function buildHeatmapSection(u, cfg, shadowMaps){
       }).join('');
       _svgHtml = '<svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 1 1" preserveAspectRatio="none">'+_circles+'</svg>';
     }
-    _wrap.innerHTML = imgHtml + _svgHtml;
+    var _estRaw = hm.estado_detectado || 'normal';
+    var _ndviRaw = hm.ndvi != null ? parseFloat(hm.ndvi) : null;
+    var _badge = (_estRaw==='stress_hidrico'||_estRaw==='resiembra_activa'||(_ndviRaw!=null&&_ndviRaw<0.20))
+      ? {text:'CRÍTICO', color:'#ff4444'}
+      : (_estRaw==='compactacion'||_estRaw==='fungosis'||_estRaw==='INDETERMINADO')
+        ? {text:'ALERTA',  color:'#ffaa00'}
+        : {text:'NORMAL',  color:'#44aa44'};
+    var _badgeHtml = '<div style="position:absolute;top:8px;right:8px;background:'+_badge.color
+      +';color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:.06em;pointer-events:none">'
+      +_badge.text+'</div>';
+    _wrap.innerHTML = imgHtml + _svgHtml + _badgeHtml;
     var shadowInlineHtml='';
     if(curSec==='vo'&&shadowMaps&&shadowMaps[curSub]){
       var smI=shadowMaps[curSub];
@@ -3195,7 +3205,7 @@ function _renderOverview(){
   svg.innerHTML = parts.join('');
 }
 
-/* ── Detail card ─────────────────────────────────────────────────────────── */
+/* ── Detail card — acciones operativas ──────────────────────────────────── */
 var _SEM_HEX = { verde:'#4cad72', amarillo:'#c9a84c', rojo:'#E53E3E' };
 
 function _renderDetail(c){
@@ -3203,58 +3213,116 @@ function _renderDetail(c){
   if(!el) return;
   if(!c){ el.innerHTML=''; return; }
 
-  var score    = c.score != null ? parseInt(c.score, 10) : null;
-  var semEmoji = _SEM_EMOJI[c.sem] || '';
-  var semLabel = _SEM_LABEL[c.sem] || 'Sin dato';
-  var bar      = _scoreBar(score);
+  var wl  = (_canonicalData && _canonicalData.weather_live) || {};
+  var est = c.estado_detectado || 'normal';
+  var ndvi = c.ndvi != null ? parseFloat(c.ndvi) : null;
 
-  var ndviV = c.ndvi_2_5m!=null ? parseFloat(c.ndvi_2_5m).toFixed(3)
-            : c.ndvi!=null ? parseFloat(c.ndvi).toFixed(3) : null;
-  var sarV  = c.entropia_h!=null ? parseFloat(c.entropia_h).toFixed(3) : null;
-  var humF  = 'theta_'+_humDepth+'cm';
-  var humV  = c[humF]!=null ? parseFloat(c[humF]).toFixed(3) : null;
+  // Badge CRÍTICO / ALERTA / NORMAL
+  var badgeColor = (est==='stress_hidrico'||est==='resiembra_activa'||(ndvi!=null&&ndvi<0.20))
+    ? '#ff4444'
+    : (est==='compactacion'||est==='fungosis'||est==='INDETERMINADO')
+      ? '#ffaa00'
+      : '#44aa44';
+  var badgeText = badgeColor==='#ff4444' ? 'CRÍTICO'
+                : badgeColor==='#ffaa00' ? 'ALERTA' : 'NORMAL';
 
-  var activeInline = _metricVal(c, _activeLayer, _humDepth);
-  var activeLabel  = _activeLayer==='ndvi' ? 'NDVI' : _activeLayer==='sar' ? 'SAR H' : 'θ '+_humDepth+'cm';
+  // Riego
+  var deficit = wl.deficit_hidrico_mm != null ? parseFloat(wl.deficit_hidrico_mm) : null;
+  var riegoColor, riegoTitle, riegoBody;
+  if(deficit != null && deficit > 5){
+    riegoColor='#ff4444'; riegoTitle='URGENTE HOY — '+Math.round(deficit*10)+' L/m²';
+    riegoBody='Horario: 6:00 AM (antes del calor)';
+  } else if(deficit != null && deficit > 2){
+    riegoColor='#ffaa00'; riegoTitle='Déficit leve — '+deficit.toFixed(1)+' mm';
+    riegoBody='Regar tarde (18:00 hs)';
+  } else {
+    riegoColor='#44aa44'; riegoTitle='Equilibrado';
+    riegoBody='Sin riego requerido hoy';
+  }
 
-  var nd  = function(v){ return v!=null ? v : 'Sin dato'; };
-  var cc  = function(layer){ return 'rg-chip'+(_activeLayer===layer?' rg-chip-active':''); };
-  var clr = function(v, stops){
-    var c = v!=null ? _rgbStr(stops, parseFloat(v)) : null;
-    return c ? 'color:'+c : 'color:var(--wdim)';
+  // Hongos
+  var sk = wl.smith_kerns_pct != null ? parseFloat(wl.smith_kerns_pct) : null;
+  var hongColor, hongTitle, hongBody;
+  if(sk != null && sk > 60){
+    hongColor='#ff4444'; hongTitle='RIESGO ALTO — '+Math.round(sk)+'%';
+    hongBody='Aplicar fungicida MAÑANA (preventiva)';
+  } else if(sk != null && sk > 20){
+    hongColor='#ffaa00'; hongTitle='Riesgo moderado — '+Math.round(sk)+'%';
+    hongBody='Monitorear condición foliar';
+  } else {
+    hongColor='#44aa44'; hongTitle=sk!=null?'Riesgo bajo — '+Math.round(sk)+'%':'Sin dato';
+    hongBody='';
+  }
+
+  // Compactación
+  var compColor, compTitle, compBody;
+  var stressMax = c.zonas_estres && c.zonas_estres.stress_max;
+  if(est==='compactacion'||(stressMax!=null&&parseFloat(stressMax)>0.70)){
+    compColor='#ffaa00'; compTitle='Zona central detectada';
+    compBody='Aireación en próximas 48 hs';
+  } else {
+    compColor='#44aa44'; compTitle='Sin compactación activa'; compBody='';
+  }
+
+  // Temperatura
+  var temp = wl.temp_max_c!=null ? parseFloat(wl.temp_max_c)
+           : wl.temp_media_c!=null ? parseFloat(wl.temp_media_c) : null;
+  var tempColor, tempTitle, tempBody;
+  if(temp!=null && temp>30){
+    tempColor='#ff4444'; tempTitle=temp.toFixed(1)+'°C — Estrés hídrico activo';
+    tempBody='Riego temprano crítico';
+  } else if(temp!=null && temp>22){
+    tempColor='#ffaa00'; tempTitle=temp.toFixed(1)+'°C — Condición moderada'; tempBody='';
+  } else {
+    tempColor='#44aa44'; tempTitle=temp!=null?temp.toFixed(1)+'°C — Temperatura óptima':'Sin dato';
+    tempBody='';
+  }
+
+  // Próximas acciones
+  var presc = c.prescripcion_operativa || '';
+  var acc = [];
+  if(deficit!=null && deficit>2) acc.push('Riego profundo (6am hoy)');
+  if(sk!=null && sk>20) acc.push('Fungicida (mañana 7am)');
+  if(est==='compactacion') acc.push('Aireación zona central (próx. 48hs)');
+  if(!acc.length && presc) acc.push(presc);
+  if(!acc.length) acc.push('Sin acciones urgentes esta semana');
+
+  var _row = function(dot, title, body){
+    return '<div style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'
+      +'<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:'+dot+'"></span>'
+      +'<span style="font-family:\'Cormorant Garamond\',serif;font-size:13px;font-weight:700;color:var(--whi)">'+title+'</span>'
+      +'</div>'
+      +(body?'<div style="font-size:11px;color:var(--wdim);padding-left:12px;line-height:1.4">'+body+'</div>':'')
+      +'</div>';
   };
 
   el.innerHTML =
-    '<div class="rg-detail-card">'+
-      '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px">'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'+
-            '<span style="font-size:13px;font-weight:700;color:var(--whi)">'+_esc(c.nombre||c.id||'—')+'</span>'+
-            '<span style="font-family:monospace;font-size:10px;color:'+(c.sem?_SEM_HEX[c.sem]:'var(--wdim)')+';letter-spacing:-.02em;flex:1;overflow:hidden;white-space:nowrap">'+_esc(bar)+'</span>'+
-            '<span style="font-size:10px;color:var(--wdim);white-space:nowrap;flex-shrink:0">'+_esc(activeLabel+' '+(activeInline||'—'))+'</span>'+
-          '</div>'+
-          '<div style="font-size:11px;color:var(--wdim)">'+
-            'Score '+(score!=null?score:'—')+' · '+semEmoji+' '+_esc(semLabel)+
-          '</div>'+
-        '</div>'+
-        '<button class="rg-detail-close" onclick="rgCloseDetail()" style="flex-shrink:0;margin-top:-2px">✕</button>'+
-      '</div>'+
-      '<div class="rg-chips">'+
-        '<div class="'+cc('ndvi')+'">'+
-          '<span class="rg-chip-label">NDVI</span>'+
-          '<span class="rg-chip-val" style="'+clr(ndviV,_NDVI_STOPS)+'">'+_esc(nd(ndviV))+'</span>'+
-        '</div>'+
-        '<div class="'+cc('sar')+'">'+
-          '<span class="rg-chip-label">SAR H·α</span>'+
-          '<span class="rg-chip-val" style="'+clr(sarV,_SAR_STOPS)+'">'+_esc(nd(sarV))+'</span>'+
-        '</div>'+
-        '<div class="'+cc('hum')+'">'+
-          '<span class="rg-chip-label">θ '+_humDepth+'cm</span>'+
-          '<span class="rg-chip-val" style="'+clr(humV,_HUM_STOPS)+'">'+_esc(nd(humV))+'</span>'+
-        '</div>'+
-      '</div>'+
-      (c.detalle?'<div class="rg-detail-text">'+_esc(c.detalle)+'</div>':'')+
-    '</div>';
+    '<div class="rg-detail-card">'
+    +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">'
+      +'<div>'
+        +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:15px;font-weight:700;color:var(--whi);letter-spacing:.02em">'
+          +_esc(c.nombre||c.id||'—')
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:7px;margin-top:4px">'
+          +'<span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fff;background:'+badgeColor+';padding:2px 9px;border-radius:3px">'+badgeText+'</span>'
+          +(ndvi!=null?'<span style="font-size:10px;color:var(--wdim)">NDVI '+ndvi.toFixed(2)+'</span>':'')
+        +'</div>'
+      +'</div>'
+      +'<button class="rg-detail-close" onclick="rgCloseDetail()" style="flex-shrink:0;margin-top:-2px">✕</button>'
+    +'</div>'
+    +'<div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c9a84c;margin-bottom:4px">Estado Operativo</div>'
+    +_row(riegoColor,'Riego',riegoTitle+(riegoBody?'<br>'+riegoBody:''))
+    +_row(hongColor,'Hongos',hongTitle+(hongBody?'<br>'+hongBody:''))
+    +_row(compColor,'Compactación',compTitle+(compBody?'<br>'+compBody:''))
+    +_row(tempColor,'Temperatura',tempTitle+(tempBody?'<br>'+tempBody:''))
+    +'<div style="padding-top:8px">'
+      +'<div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c9a84c;margin-bottom:5px">Próximas Acciones</div>'
+      +acc.map(function(a,i){
+        return '<div style="font-size:11px;color:var(--whi);padding:2px 0">'+(i+1)+'. '+_esc(a)+'</div>';
+      }).join('')
+    +'</div>'
+    +'</div>';
 }
 
 /* ── Public controls ─────────────────────────────────────────────────────── */
