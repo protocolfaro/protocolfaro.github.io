@@ -3031,26 +3031,32 @@ function render(data, cfg){
   }
 }
 
+function _doRender(data, cfg){
+  render(data, cfg);
+  if(cfg) fetchPartidosAPI(cfg).then(function(partido){
+    _apiPartido = partido;
+    var userSlug = slug();
+    var u = data.usuarios && data.usuarios[userSlug];
+    if(u && (u.tipo==='canchero' || u.tipo==='intendente')){
+      renderEventsCalendar(partido);
+      if(u.tipo==='canchero' && partido && !u.proximo_partido){
+        buildMatchAlert(partido);
+      }
+    }
+  }).catch(function(){});
+}
+
 function init(){
   var _get = function(url){ return fetch(url).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}); };
-  Promise.all([
-    _get(DATA_URL).catch(function(){ return _get(DATA_FALLBACK); }),
-    fetch(CONFIG_URL).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
-  ]).then(function(res){
-    var data = res[0], cfg = res[1];
-    render(data, cfg);
-    if(cfg) fetchPartidosAPI(cfg).then(function(partido){
-      _apiPartido = partido;
-      var userSlug = slug();
-      var u = data.usuarios && data.usuarios[userSlug];
-      if(u && (u.tipo==='canchero' || u.tipo==='intendente')){
-        renderEventsCalendar(partido);
-        if(u.tipo==='canchero' && partido && !u.proximo_partido){
-          buildMatchAlert(partido);
-        }
-      }
-    }).catch(function(){});
-  }).catch(function(){show('error-msg');});
+  var _cfg = fetch(CONFIG_URL).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});
+  // Carga rápida desde GitHub raw; Railway actualiza en background sin bloquear
+  Promise.all([_get(DATA_FALLBACK), _cfg])
+    .then(function(res){ _doRender(res[0], res[1]); })
+    .catch(function(){show('error-msg');});
+  // Refresh silencioso desde Railway (~15s) — re-renderiza si tiene datos más frescos
+  _get(DATA_URL)
+    .then(function(fresh){ _doRender(fresh, null); })
+    .catch(function(){});
 }
 setInterval(function(){ init(); }, 300000);
 window.mcSwitchTab     = mcSwitchTab;
